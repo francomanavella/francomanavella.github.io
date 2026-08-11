@@ -20,8 +20,16 @@ decisiones detrás de cada diseño.
 - Travel Tech
 
 ## 📂 Proyectos
-*(acá vamos a ir agregando los links a cada carpeta/proyecto)*
+
+### ✈️ AV — Search Component
+Diseño y desarrollo del componente de búsqueda de vuelos para AV: control de estaciones (origen/destino), selector de tipo de viaje (pill tabs) y dropdown de pasajeros, construido sobre un design system propio con tokens documentados de color, tipografía y espaciado.
+
+- 🎨 [Ver en Figma](https://www.figma.com/design/wZiu2WX6heeznM5DKcw8Cd/Search-Component?node-id=1-7050&t=611SiJtHpv3Jkwzd-1)
+- 💻 [Ver demo (desktop)](https://francomanavella.github.io/proyectos/av-search-component/search-desktop.html)
+- 🎨 [Ver Style Guide / Design System](https://francomanavella.github.io/proyectos/av-search-component/design-system.html)
+- 📄 [Documentación del design system](proyectos/av-search-component/Design.md)
 
 ## 📬 Contacto
 - ✉️ Email: [francomanavella2@gmail.com](mailto:francomanavella2@gmail.com)
 - 💼 LinkedIn: [linkedin.com/in/franco-manavella-30884032](https://www.linkedin.com/in/franco-manavella-30884032/)
+  
