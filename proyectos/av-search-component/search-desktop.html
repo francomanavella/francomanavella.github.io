@@ -1,0 +1,2049 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AV — Search Desktop</title>
+<style>
+
+  /* ============================================================
+     TOKENS — copiados literalmente de design.md (fuente de verdad)
+     ============================================================ */
+  :root {
+    /* Escala de grises — primitivo, sección 2 design.md */
+    --gray-0: #FFFFFF;
+
+    /* Color — Neutros */
+    --color-text-primary:    #1B1B1B;
+    --color-text-secondary:  #6C6C6C;
+    --color-text-disabled:   #5A5A5A;
+    --color-text-inverse:    #FFFFFF;
+    --color-background:      #FFFFFF;
+    --color-surface:         #FAFAFA;
+    --color-surface-raised:  #FFFFFF;
+    --color-border:          #E9E9E9;
+    --color-border-strong:   #D9D9D9;
+    --color-hover:           #E9E9E9;
+    --color-pressed:         #D9D9D9;
+
+    /* Color — Brand / Botones */
+    --color-primary:         #1B1B1B;
+    --color-primary-hover:   #494949;
+    --color-primary-press:   #6C6C6C;
+    --color-focus-ring:      #1D9BF0;
+
+    /* Input (sección 8 design.md) */
+    --color-border-input-default: #949494;
+    --color-border-input-active:  #1EA93C;
+    --color-border-input-error:   #FF1C46;
+    --color-input-bg-disabled:    #F5F5F5;
+    --color-input-text-error:     #C20000; /* label en estado error, tabla Input sección 8 */
+    --color-input-text-disabled:  #C4C8C5; /* texto label/valor en disabled, tabla Input sección 8 — faltaba, usado ahora en el stepper del Dropdown */
+
+    /* Estados de selección — sección 2 design.md v1.8.1 */
+    --color-selection-selected: #23C847;
+    --color-selection-border:   #1B1B1B;
+
+    /* Tipografía */
+    --font-primary: 'Red Hat Display', sans-serif;
+
+    /* Espaciado (base 4px) */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px; /* faltaba — el Dropdown lo usaba sin que existiera, el padding quedaba en 0 */
+
+    /* Radios */
+    --radius-sm:   4px;
+    --radius-md:   8px;
+    --radius-lg:   12px;
+    --radius-xl:   16px;
+    --radius-full: 9999px;
+
+    /* Motion */
+    --duration-fast:   100ms;
+    --duration-normal: 200ms;
+    --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* ------------------------------------------------------------
+       PROPUESTOS — NO existen en design.md. Ver nota #7 en el chat.
+       Pendiente de validación por el Design Lead antes de subir versión
+       al documento.
+       ------------------------------------------------------------ */
+    --color-surface-glass: rgba(255, 255, 255, 0.5);      /* NUEVO */
+    --shadow-search: 0px 2px 12px 0px rgba(27, 27, 27, 0.15); /* NUEVO */
+
+    /* Dropdown (componente nuevo) — valores sacados del nodo real de Figma
+       "Dropdown pasajeros" (22148:7287, "Background+Shadow"), no existían
+       en design.md. Documentados en la sección Dropdown de design.md. */
+    --shadow-dropdown: 0px 2px 6px rgba(27, 27, 27, 0.15); /* NUEVO — distinto de --shadow-search (6px vs 12px de blur) */
+    --color-info-banner-bg: #DAF1F4; /* NUEVO — banner informativo dentro de Dropdown, no confundir con --color-av-teal (#89D4E1) */
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    position: relative;
+    font-family: var(--font-primary);
+    background: var(--color-surface);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--space-12, 48px);
+    overflow-x: hidden;
+  }
+
+  /* Fondo de página — imagen decorativa detrás del Search, se diluye
+     hacia abajo con un mask-image (fade a transparente). No documentado
+     en design.md — elemento puramente visual de esta pantalla, pendiente
+     de validar con Design si se formaliza como token/patrón. */
+  .av-page-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1000px;
+    max-height: 1000px;
+    background: linear-gradient(155deg, #3B6FD4 0%, #5BA8DC 30%, #A8D8F0 60%, #E8F6FF 85%, #F5FFF8 100%);
+    background-size: 100% 100%;
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, black 35%, transparent 90%);
+    mask-image: linear-gradient(to bottom, black 0%, black 35%, transparent 90%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ============================================================
+     WRAPPER PRINCIPAL
+     ============================================================ */
+  .av-search {
+    position: relative;
+    z-index: 1;
+    width: 1248px;
+    max-width: 100%;
+    background: var(--color-surface-glass); /* NUEVO — no en design.md */
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-search);         /* NUEVO — no en design.md */
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------------- Fila de tabs (trip type / servicios) ---------------- */
+  .av-search__tabs-wrap {
+    padding: var(--space-4) 0;
+  }
+
+  .av-search__tabs-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-6);
+    gap: var(--space-4);
+  }
+
+  .av-search__tabs-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex: 1 0 0;
+  }
+
+  .av-search__tabs-group--right {
+    justify-content: flex-end;
+  }
+
+  /* PillTab base — spec sección 8 design.md */
+  .av-pill {
+    height: 40px;
+    padding: 10.5px 18px;
+    border-radius: var(--radius-full);
+    background: #FFFFFF;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-primary);
+    font-size: 14px;
+    color: var(--color-text-primary);
+    transition: background-color var(--duration-fast) var(--ease-default);
+    white-space: nowrap;
+  }
+
+  .av-pill:hover {
+    background: var(--color-hover);
+  }
+
+  .av-pill:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  /* NUEVO patrón — "PillToggle": 2 opciones (radio) dentro de un mismo pill.
+     No documentado como componente en design.md (ver nota #1 y #2). */
+  .av-pill--toggle {
+    gap: var(--space-2);
+  }
+
+  .av-pill--toggle .av-pill__option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: 400; /* opción no seleccionada: Regular */
+  }
+
+  .av-pill--toggle .av-pill__option.is-selected {
+    font-weight: 700; /* opción seleccionada: Bold — B100 real según sección 3 */
+  }
+
+  .av-radio {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-full);
+    border: 1.5px solid var(--color-selection-border);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* Checked state verificado contra Figma (node 22128:6942/6943): relleno
+     verde completo + punto blanco central de 8px, NO borde verde con punto
+     verde interior como se asumió inicialmente. */
+  .av-radio.is-checked {
+    background: var(--color-selection-selected);
+    border-color: var(--color-selection-selected);
+  }
+
+  .av-radio.is-checked::after {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gray-0);
+  }
+
+  .av-checkbox {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid var(--color-text-primary);
+    background: #FFFFFF;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* Checked: mismo verde que el radio (--color-selection-selected), pero
+     acá el cuadrado se rellena completo y el ícono queda como check blanco
+     adentro — no hay un ícono "check" simple (sin círculo) documentado en
+     la librería AV (sección 7.1); los más cercanos son check_circle/
+     check_circle_outline (categoría Alert), que traen círculo propio y no
+     sirven para este caso. Se usa un check genérico como placeholder,
+     mismo tipo de gap que el conflicto Lucide/AV ya anotado en design.md. */
+  .av-checkbox.is-checked {
+    background: var(--color-selection-selected);
+    border-color: var(--color-selection-selected);
+  }
+
+  .av-checkbox__check {
+    width: 13px;
+    height: 13px;
+    display: none;
+  }
+
+  .av-checkbox.is-checked .av-checkbox__check {
+    display: block;
+  }
+
+  /* Figma (icon/navigation/open_in_new): el glifo real ocupa 10.5px dentro
+     de un contenedor de 14px (inset 12.5% por lado) — no llena el box. */
+  .av-pill__icon {
+    width: 14px;
+    height: 14px;
+    padding: 1.75px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    color: var(--color-text-primary);
+  }
+  .av-pill__icon svg { display: block; width: 100%; height: 100%; }
+
+  /* ---------------- Panel principal (inputs + botón) ---------------- */
+  .av-search__panel {
+    background: var(--color-background);
+    border-radius: var(--radius-xl);
+    padding: var(--space-5) var(--space-6);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  /* NUEVO componente — "StationControl": contenedor con 2 inputs unidos.
+     No es el Input documentado en sección 8 (ver nota #3). */
+  .av-station {
+    flex: 1 0 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    background: var(--gray-0);
+    border: 1px solid var(--color-border); /* NUEVO: usa --color-border, no --color-border-input-default */
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    transition: border-color var(--duration-fast) var(--ease-default);
+  }
+
+  /* Estado error: design.md marca esto como "pendiente de definir, no usar
+     los colores del Input estándar sin validar con Figma" — se usa igual
+     a pedido explícito (rojo del Input) ya que no existe spec propia de
+     StationControl. El borde reacciona a nivel de contenedor (Origin+
+     Destination comparten un solo borde), no por campo individual.
+     Hover y focus, en cambio, NO usan el borde del contenedor — ambos
+     usan el indicador de línea inferior por campo (.av-station__field::after
+     más abajo), que distingue cuál de los 2 campos se está interactuando. */
+  .av-station.has-error {
+    border-color: var(--color-border-input-error);
+  }
+
+  .av-station--fixed {
+    flex: none;
+    width: 342px;
+  }
+
+  /* Antes era <button>; pasa a <div> porque ahora envuelve un <input>
+     real (un botón no puede contener contenido interactivo válido). El
+     foco/click-para-editar lo maneja el <label> nativo de adentro. */
+  .av-station__field {
+    position: relative;
+    flex: 1 0 0;
+    min-width: 110px;
+    max-width: 600px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 12px var(--space-4);
+    background: none;
+    text-align: left;
+    font: inherit;
+  }
+
+  /* Indicador de hover/foco por campo (no por contenedor): línea de 4px con
+     el color de selección de design.md (--color-selection-selected, #23C847
+     — el mismo verde del radio/checkbox checked), pegada al borde inferior
+     únicamente del campo interactuado (Origin O Destination, no ambos). */
+  .av-station__field::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 4px;
+    background: var(--color-selection-selected);
+    transform: scaleX(0);
+    transform-origin: left; /* sin esto, scaleX anima desde el centro hacia los 2 lados */
+    transition: transform var(--duration-fast) var(--ease-default);
+  }
+
+  .av-station__field:hover::after,
+  .av-station__field:focus-within::after {
+    transform: scaleX(1);
+  }
+
+  .av-station__icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: var(--color-text-primary);
+  }
+  .av-station__icon svg { display: block; width: 100%; height: 100%; }
+
+  .av-station__content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    width: 100%;
+    cursor: text;
+  }
+
+  /* ⚠ Conflicto con design.md (sección StationControl, "sin transición
+     floating label"): el nodo real de Figma (22128:7064 vs 22128:7066)
+     muestra el label en 14px cuando el campo está vacío y en 12px cuando
+     tiene valor — sí hay floating label, igual que el Input estándar.
+     Se implementa como está en Figma; falta que Design actualice la nota
+     de la sección StationControl en design.md. */
+  .av-station__label {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--color-text-disabled); /* #5A5A5A */
+    line-height: 1.5;
+    transition: font-size var(--duration-fast) var(--ease-default),
+                color var(--duration-fast) var(--ease-default);
+  }
+
+  /* is-filled: clase que setea script.js según el valor real del input
+     (reemplaza el modificador estático av-station__field--filled). */
+  .av-station__field.is-filled .av-station__label,
+  .av-station__field:focus-within .av-station__label {
+    font-size: 12px;
+  }
+
+  .av-station__field.has-error .av-station__label {
+    color: var(--color-input-text-error);
+  }
+
+  .av-station__value {
+    display: block;
+    width: 100%;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    line-height: normal;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* Colapsado por defecto: en el estado "sin valor" del StationControl
+       solo se muestra el label (ver spec Input). Se expande al escribir
+       o al enfocar, igual que un floating label. */
+    max-height: 0;
+    opacity: 0;
+    transition: max-height var(--duration-fast) var(--ease-default),
+                opacity var(--duration-fast) var(--ease-default);
+  }
+
+  .av-station__field.is-filled .av-station__value,
+  .av-station__field:focus-within .av-station__value {
+    max-height: 24px;
+    opacity: 1;
+  }
+
+  /* Reset del <input>/<input type="date"> real dentro del value — visualmente
+     debe verse idéntico al <span> que reemplaza.
+     ⚠ "font: inherit" (shorthand) pisaba el font-weight:700/font-size:16px
+     ya definidos en .av-station__value (mayor especificidad por el
+     selector de elemento), dejando el texto tipeado en peso normal en vez
+     de Bold — el estado "filled" de Input exige Bold explícitamente. Se
+     resetea solo font-family, dejando que .av-station__value siga
+     controlando tamaño y peso. */
+  input.av-station__value {
+    border: none;
+    outline: none;
+    background: none;
+    padding: 0;
+    margin: 0;
+    font-family: inherit;
+  }
+
+  input.av-station__value::-webkit-calendar-picker-indicator {
+    /* El ícono leading (calendar-month) ya cumple esa función visual */
+    display: none;
+  }
+
+  .av-station__divider {
+    width: 1px;
+    height: 40px;
+    background: var(--color-border-strong);
+    flex-shrink: 0;
+  }
+
+  /* Selector de pasajeros — borde --color-border-strong, no Input estándar.
+     Estructura base verificada contra Figma (node 22128:7071): ícono
+     leading + valor. Leading reemplazado por icon/social/person_add
+     (semánticamente correcto para "pasajeros"; Figma trae el mismo
+     takeoff genérico del StationControl, ver histórico en git).
+     ⚠ Ahora SÍ tiene popover (Dropdown de pasajeros, ver más abajo) — el
+     .av-travelers pasó de <button> a <div> (wrapper con position:relative)
+     porque un botón no puede contener otros botones/links interactivos
+     adentro; el trigger real es .av-travelers__trigger. */
+  .av-travelers {
+    position: relative;
+    flex: none;
+    width: 120px;
+  }
+
+  .av-travelers__trigger {
+    width: 100%;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 12px var(--space-4);
+    background: var(--gray-0);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+    transition: border-color var(--duration-fast) var(--ease-default);
+  }
+
+  /* Mismo lenguaje que los demás campos del panel: hover/focus usan el
+     verde de Input en vez del focus-ring azul de botón, para leerse como
+     "otro campo" del form. */
+  .av-travelers__trigger:hover,
+  .av-travelers__trigger:focus-visible {
+    border-color: var(--color-border-input-active);
+    outline: none;
+  }
+
+  /* Estado "dropdownInput" (v1.9.1, ver design.md sección Dropdown): estado
+     formal para cualquier input del Search que dispare un Dropdown mientras
+     ese Dropdown está abierto. Reutiliza el mismo verde que hover/focus a
+     propósito (decisión explícita: no diferenciarlo visualmente todavía) —
+     no es un accidente de selector compartido, es el estado documentado. */
+  .av-travelers.is-open .av-travelers__trigger {
+    border-color: var(--color-border-input-active);
+    outline: none;
+  }
+
+  .av-travelers__icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: var(--color-text-primary);
+  }
+  .av-travelers__icon svg { display: block; width: 100%; height: 100%; }
+
+  .av-travelers__value {
+    flex: 1 0 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+  }
+
+  /* icon/navigation/expand_more — indicador de expansión a la derecha */
+  .av-travelers__chevron {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: var(--color-text-primary);
+    transition: transform var(--duration-fast) var(--ease-default);
+  }
+  .av-travelers__chevron svg { display: block; width: 100%; height: 100%; }
+  .av-travelers.is-open .av-travelers__chevron { transform: rotate(180deg); }
+
+  /* ============================================================
+     DROPDOWN (componente nuevo) — contenedor base: fondo gray-0 +
+     --shadow-dropdown, sacados del nodo real de Figma (22148:7287).
+     Alcance de esta primera versión: instancia de Pasajeros. El shell
+     (.av-dropdown) es reutilizable para otros inputs del Search más
+     adelante (Origin/Destination, Salida/Regreso) cuando tengamos su
+     contenido definido — ver nota de alcance en design.md.
+     ============================================================ */
+  .av-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    right: 0;
+    z-index: 20;
+    width: 359px;
+    max-width: calc(100vw - 48px);
+    flex-direction: column;
+    gap: 20px;
+    background: var(--gray-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-dropdown);
+    padding: var(--space-8);
+  }
+
+  .av-travelers.is-open .av-dropdown {
+    display: flex;
+  }
+
+  .av-dropdown__title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0 0 7px;
+  }
+
+  .av-dropdown__list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .av-dropdown__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-2) 0;
+  }
+
+  .av-dropdown__item-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .av-dropdown__item-title {
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--color-text-primary);
+  }
+
+  .av-dropdown__item-sub {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-text-disabled); /* #5A5A5A — mismo token que StationControl usa para texto muted */
+  }
+
+  /* Stepper +/- — íconos reales bajados de Figma (mismo path para +/-,
+     ring + símbolo en un solo path). Color por defecto currentColor para
+     poder togglear enabled/disabled vía color en vez de swap de asset. */
+  .av-stepper {
+    width: 96px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .av-stepper__btn {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .av-stepper__btn svg { display: block; width: 100%; height: 100%; }
+
+  /* Cambiado v1.9.3: --gray-700 (#969696, el valor literal del asset de
+     Figma) no contrastaba lo suficiente para leerse como "disabled" a simple
+     vista. Se usa --color-input-text-disabled (#C4C8C5), el token que
+     design.md ya define formalmente para el estado disabled del Input
+     (sección 8) — mismo criterio semántico, mucho más claro visualmente. */
+  .av-stepper__btn:disabled {
+    color: var(--color-input-text-disabled);
+    cursor: not-allowed;
+  }
+
+  .av-stepper__value {
+    min-width: 24px;
+    text-align: center;
+    font-size: 24px; /* Figma trae 25px, fuera de la escala documentada (10/12/14/16/18/20/24/32/36/44/52) — se usa el más cercano, ver nota en design.md */
+    font-weight: 700;
+    color: var(--color-text-primary);
+  }
+
+  /* Fill (ancho completo del dropdown) a pedido — Figma trae el Confirm
+     como HUG/centrado; acá ocupa todo el ancho disponible. */
+  .av-dropdown__confirm {
+    width: 100%;
+    height: 52px;
+    padding: 0 var(--space-6);
+    border-radius: var(--radius-full);
+    background: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    color: var(--color-text-inverse);
+    font-family: var(--font-primary);
+    font-weight: 700;
+    font-size: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color var(--duration-normal) var(--ease-default),
+                border-color var(--duration-normal) var(--ease-default);
+  }
+  .av-dropdown__confirm:hover {
+    background: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+  }
+  .av-dropdown__confirm:active {
+    background: var(--color-primary-press);
+    border-color: var(--color-primary-press);
+  }
+  .av-dropdown__confirm:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  /* Banner informativo — bg NUEVO (--color-info-banner-bg), texto e íconos
+     en --color-link-active (#0E4C54, coincide exacto con el color real de
+     Figma para este banner, sin necesidad de token nuevo para el texto). */
+  .av-dropdown__banner {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    background: var(--color-info-banner-bg);
+    border-radius: var(--radius-md);
+  }
+
+  .av-dropdown__banner-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: var(--color-link-active);
+  }
+  .av-dropdown__banner-icon svg { display: block; width: 100%; height: 100%; }
+
+  .av-dropdown__banner-text {
+    flex: 1 0 0;
+    margin: 0;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--color-link-active);
+  }
+  .av-dropdown__banner-text a {
+    color: inherit;
+    text-decoration: underline;
+  }
+
+  .av-dropdown__banner-close {
+    width: 16px;
+    height: 17px;
+    flex-shrink: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--color-link-active);
+    cursor: pointer;
+  }
+  .av-dropdown__banner-close svg { display: block; width: 100%; height: 100%; }
+
+  /* ============================================================
+     DROPDOWN — Listbox de ciudades (Origin/Destination), verificado
+     contra Figma node 22151:7286 / 22132:7084 "Listbox - Origen".
+     Reutiliza el shell .av-dropdown (bg gray-0 + shadow-dropdown +
+     radius-xl) con un modificador de padding/ancho propio, porque el
+     contenido es una lista con divisores, no bloques con gap de 20px
+     como el Dropdown de Pasajeros.
+     ============================================================ */
+  /* ⚠ position: fixed (no absolute) — .av-station tiene overflow:hidden
+     (recorta las esquinas de los 2 campos, ver ese bloque) y eso recortaba
+     por completo un dropdown posicionado absolute relativo al campo, ya
+     que caía fuera de la caja recortada. Con fixed escapa ese overflow;
+     top/left se calculan por JS (getBoundingClientRect del input) al abrir. */
+  .av-dropdown--listbox {
+    display: none;
+    position: fixed;
+    width: 360px;
+    max-width: calc(100vw - 48px);
+    padding: var(--space-6) var(--space-4);
+    gap: 0;
+  }
+
+  .av-station__field.is-open .av-dropdown--listbox {
+    display: flex;
+  }
+
+  .av-listbox__label {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--color-text-disabled); /* #5A5A5A — el export de Figma marca "font-bold" pero visualmente (screenshot) no se ve bold; se usa Regular */
+    margin: 0 0 var(--space-2);
+  }
+
+  .av-listbox__list {
+    display: flex;
+    flex-direction: column;
+    max-height: 328px;
+    overflow-y: auto;
+  }
+
+  /* Fila: hover y selected NO están en el frame de Figma (solo muestra el
+     estado default) — se definen acá reusando tokens ya existentes del
+     sistema, mismo criterio que con StationControl/Dropdown de Pasajeros. */
+  .av-listbox__option {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    width: 100%;
+    padding: var(--space-4) 0;
+    border: none;
+    border-bottom: 1px solid var(--color-border-strong);
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+  }
+  .av-listbox__list .av-listbox__option:last-child {
+    border-bottom: none;
+  }
+
+  .av-listbox__option:hover {
+    background: var(--color-hover); /* #E9E9E9 — mismo token que hover de PillTab */
+  }
+
+  .av-listbox__option-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .av-listbox__option-city {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .av-listbox__option-airport {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--color-text-disabled);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .av-listbox__option-code {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--color-text-primary);
+  }
+
+  /* Selected: bold + check verde — mismo ícono genérico de check y mismo
+     --color-selection-selected que radio/checkbox (sección 2 design.md).
+     No hay spec de Figma para este estado, se define acá. */
+  .av-listbox__option-check {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: var(--color-selection-selected);
+    display: none;
+  }
+  .av-listbox__option-check svg { display: block; width: 100%; height: 100%; }
+
+  .av-listbox__option.is-selected .av-listbox__option-city,
+  .av-listbox__option.is-selected .av-listbox__option-code {
+    font-weight: 700;
+  }
+  .av-listbox__option.is-selected .av-listbox__option-check {
+    display: block;
+  }
+
+  /* Botón Search — Primary, spec sección 8 design.md */
+  .av-search__button {
+    flex: none;
+    height: 52px;
+    min-width: 100px;
+    padding: 0 var(--space-6); /* 24px — design.md documenta 24px (ver nota #6, Figma trae 26px) */
+    border-radius: var(--radius-full);
+    background: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    color: var(--color-text-inverse);
+    font-family: var(--font-primary);
+    font-weight: 700;
+    font-size: 20px; /* text.button.B200 */
+    cursor: pointer;
+    transition: background-color var(--duration-normal) var(--ease-default),
+                border-color var(--duration-normal) var(--ease-default);
+  }
+
+  .av-search__button:hover {
+    background: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+  }
+
+  .av-search__button:active {
+    background: var(--color-primary-press);
+    border-color: var(--color-primary-press);
+  }
+
+  .av-search__button:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  /* ============================================================
+     LOADING SCREEN — Figma node 22177:7662
+     3 dots verdes #27AE60, bounce secuencial, pantalla blanca
+     ============================================================ */
+  .av-loading-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: #ffffff;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+  }
+  .av-loading-screen.is-visible { display: flex; }
+
+  .av-loading-dots {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .av-loading-dots__dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #27AE60;
+    animation: av-dot-bounce 1.2s ease-in-out infinite;
+  }
+  .av-loading-dots__dot:nth-child(2) { animation-delay: 0.18s; }
+  .av-loading-dots__dot:nth-child(3) { animation-delay: 0.36s; }
+
+  @keyframes av-dot-bounce {
+    0%, 55%, 100% { transform: translateY(0);    opacity: 1; }
+    27%           { transform: translateY(-18px); opacity: 0.85; }
+  }
+
+  .av-loading-label {
+    font-family: var(--font-primary);
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--color-text-secondary, #616161);
+    letter-spacing: 0.01em;
+  }
+
+  /* ============================================================
+     CALENDAR DROPDOWN — Figma node 22159:10884
+     ============================================================ */
+  .av-calendar {
+    display: none;
+    position: fixed;
+    z-index: 40;
+    width: 704px;
+    max-width: calc(100vw - 48px);
+    background: var(--gray-0);
+    border-radius: var(--radius-xl);
+    box-shadow: 0px 8px 24px rgba(27,27,27,0.12);
+    padding: 24px;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .av-calendar.is-open { display: flex; }
+
+  .av-calendar__title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    line-height: normal;
+  }
+
+  .av-calendar__body {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .av-calendar__arrow {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--color-border-strong);
+    background: var(--gray-0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-family: var(--font-primary);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+    margin-top: 4px;
+    transition: background var(--duration-fast) var(--ease-default);
+  }
+  .av-calendar__arrow:hover:not(:disabled) { background: var(--color-hover); }
+  .av-calendar__arrow:disabled { color: var(--color-border-strong); border-color: var(--color-border-strong); cursor: default; }
+
+  .av-calendar__months {
+    display: flex;
+    flex: 1;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .av-calendar__month { width: 280px; display: flex; flex-direction: column; gap: 8px; }
+
+  /* Price offer tiers (green / yellow / peach from Figma Number variants) */
+  .av-calendar__day.is-offer-cheap:not(.is-selected):not(.is-range-start):not(.is-range-end) .av-calendar__day-num  { background: #D4F4DE; color: #1B6E3F; }
+  .av-calendar__day.is-offer-mid:not(.is-selected):not(.is-range-start):not(.is-range-end) .av-calendar__day-num    { background: #FFF3CB; color: #7A5800; }
+  .av-calendar__day.is-offer-pricey:not(.is-selected):not(.is-range-start):not(.is-range-end) .av-calendar__day-num { background: #FFE5D0; color: #8B3E00; }
+
+  .av-calendar__month-title {
+    height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; color: var(--color-text-primary);
+  }
+
+  .av-calendar__grid { display: flex; flex-direction: column; }
+  .av-calendar__week { display: flex; }
+
+  .av-calendar__hcell {
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: var(--color-text-primary);
+    flex-shrink: 0;
+  }
+
+  .av-calendar__day {
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    cursor: pointer;
+  }
+  .av-calendar__day.is-empty,
+  .av-calendar__day.is-disabled { cursor: default; }
+  .av-calendar__day.is-disabled .av-calendar__day-num { opacity: 0.3; }
+
+  /* Range highlight strip */
+  .av-calendar__day::before {
+    content: '';
+    position: absolute;
+    top: 5px; bottom: 5px;
+    left: 0; right: 0;
+    background: transparent;
+    z-index: 0;
+  }
+  .av-calendar__day.is-range-start::before { left: 50%; right: 0; background: var(--color-hover); }
+  .av-calendar__day.is-range-end::before   { left: 0; right: 50%; background: var(--color-hover); }
+  .av-calendar__day.is-range-inside::before { background: var(--color-hover); }
+
+  /* Day circle — 30×30 */
+  .av-calendar__day-num {
+    width: 30px; height: 30px;
+    border-radius: 100px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 400; color: var(--color-text-primary);
+    position: relative; z-index: 1;
+    transition: background var(--duration-fast) var(--ease-default),
+                color var(--duration-fast) var(--ease-default);
+  }
+
+  .av-calendar__day:not(.is-empty):not(.is-disabled):not(.is-selected):hover .av-calendar__day-num {
+    background: var(--color-hover);
+  }
+
+  .av-calendar__day.is-today .av-calendar__day-num {
+    box-shadow: 0 0 0 1.5px var(--color-text-primary);
+  }
+
+  .av-calendar__day.is-selected .av-calendar__day-num {
+    background: var(--color-primary);
+    color: #FFFFFF;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="av-page-bg" aria-hidden="true"></div>
+
+<div class="av-search" role="search" aria-label="Buscador de vuelos">
+
+  <!-- ============ Fila de tabs ============ -->
+  <div class="av-search__tabs-wrap">
+    <div class="av-search__tabs-row">
+
+      <div class="av-search__tabs-group">
+
+        <!-- PillToggle: One way / Round trip (patrón nuevo, ver nota #2) -->
+        <div class="av-pill av-pill--toggle" role="radiogroup" aria-label="Tipo de viaje">
+          <span class="av-pill__option" role="radio" aria-checked="false" tabindex="0">
+            <span class="av-radio"></span>
+            One way
+          </span>
+          <span class="av-pill__option is-selected" role="radio" aria-checked="true" tabindex="0">
+            <span class="av-radio is-checked"></span>
+            Round trip
+          </span>
+        </div>
+
+        <!-- PillTab con checkbox -->
+        <label class="av-pill">
+          <span class="av-checkbox" aria-hidden="true">
+            <svg class="av-checkbox__check" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>
+          </span>
+          <input type="checkbox" id="av-avianca-credits" style="position:absolute; opacity:0; width:0; height:0;" />
+          Book with Avianca Credits
+        </label>
+
+        <!-- PillTab link (abre en nueva pestaña) -->
+        <a class="av-pill" href="#" aria-label="Book with miles (abre en nueva pestaña)">
+          Book with miles
+          <span class="av-pill__icon" aria-hidden="true">
+            <svg viewBox="0 0 10.5 10.5" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.33333 9.33333H1.16667V1.16667H5.25V0H1.16667C0.519167 0 0 0.525 0 1.16667V9.33333C0 9.975 0.519167 10.5 1.16667 10.5H9.33333C9.975 10.5 10.5 9.975 10.5 9.33333V5.25H9.33333V9.33333ZM6.41667 0V1.16667H8.51083L2.77667 6.90083L3.59917 7.72333L9.33333 1.98917V4.08333H10.5V0H6.41667Z" fill="currentColor"/></svg>
+          </span>
+        </a>
+      </div>
+
+      <div class="av-search__tabs-group av-search__tabs-group--right">
+        <a class="av-pill" href="#" aria-label="Hotels (abre en nueva pestaña)">
+          Hotels
+          <span class="av-pill__icon" aria-hidden="true">
+            <svg viewBox="0 0 10.5 10.5" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.33333 9.33333H1.16667V1.16667H5.25V0H1.16667C0.519167 0 0 0.525 0 1.16667V9.33333C0 9.975 0.519167 10.5 1.16667 10.5H9.33333C9.975 10.5 10.5 9.975 10.5 9.33333V5.25H9.33333V9.33333ZM6.41667 0V1.16667H8.51083L2.77667 6.90083L3.59917 7.72333L9.33333 1.98917V4.08333H10.5V0H6.41667Z" fill="currentColor"/></svg>
+          </span>
+        </a>
+        <a class="av-pill" href="#" aria-label="Cars (abre en nueva pestaña)">
+          Cars
+          <span class="av-pill__icon" aria-hidden="true">
+            <svg viewBox="0 0 10.5 10.5" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.33333 9.33333H1.16667V1.16667H5.25V0H1.16667C0.519167 0 0 0.525 0 1.16667V9.33333C0 9.975 0.519167 10.5 1.16667 10.5H9.33333C9.975 10.5 10.5 9.975 10.5 9.33333V5.25H9.33333V9.33333ZM6.41667 0V1.16667H8.51083L2.77667 6.90083L3.59917 7.72333L9.33333 1.98917V4.08333H10.5V0H6.41667Z" fill="currentColor"/></svg>
+          </span>
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ Panel de inputs ============ -->
+  <div class="av-search__panel">
+
+    <!-- StationControl 1: Origin / Destination (flexible) -->
+    <div class="av-station">
+      <div class="av-station__field" id="av-origin-field">
+        <span class="av-station__icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M17.0834 15.8333H2.91673C2.4584 15.8333 2.0834 16.2083 2.0834 16.6667C2.0834 17.125 2.4584 17.5 2.91673 17.5H17.0834C17.5417 17.5 17.9167 17.125 17.9167 16.6667C17.9167 16.2083 17.5417 15.8333 17.0834 15.8333ZM18.3917 8.03334C18.2084 7.36667 17.5251 6.97501 16.8584 7.15001L12.4334 8.33334L7.05006 3.31667C6.82506 3.10001 6.50006 3.02501 6.20006 3.10834C5.6334 3.26667 5.36673 3.91667 5.6584 4.42501L8.52506 9.39167L4.3834 10.5L3.07506 9.46667C2.86673 9.30834 2.60006 9.25001 2.34173 9.31667L2.06673 9.39167C1.80006 9.45834 1.67506 9.76667 1.81673 10L3.3834 12.7083C3.57506 13.0333 3.9584 13.1917 4.31673 13.1L17.5001 9.56667C18.1667 9.38334 18.5667 8.70001 18.3917 8.03334Z" fill="currentColor"/></svg>
+        </span>
+        <label class="av-station__content">
+          <span class="av-station__label">Origin</span>
+          <input class="av-station__value" type="text" id="field-origin" value="Bogotá (BOG)" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="av-origin-listbox" aria-autocomplete="list" />
+        </label>
+
+        <!-- Dropdown de ciudades — verificado contra Figma (node 22151:7286 /
+             22132:7084 "Listbox - Origen"). Muestra de ~9 ciudades, no el
+             dataset real de aeropuertos (mismo criterio que las categorías
+             de pasajeros: contenido de pantalla, no del design system). -->
+        <div class="av-dropdown av-dropdown--listbox" id="av-origin-listbox" role="listbox" aria-label="Seleccionar origen">
+          <p class="av-listbox__label">Todos los aeropuertos</p>
+          <div class="av-listbox__list">
+            <button class="av-listbox__option is-selected" type="button" role="option" aria-selected="true" data-value="Bogotá (BOG)">
+              <span class="av-listbox__option-main">
+                <span class="av-listbox__option-city">Bogotá, Colombia</span>
+                <span class="av-listbox__option-airport">El Dorado Intl</span>
+              </span>
+              <span class="av-listbox__option-code">
+                BOG
+                <span class="av-listbox__option-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>
+                </span>
+              </span>
+            </button>
+            <button class="av-listbox__option" type="button" role="option" aria-selected="false" data-value="Johannesburgo (JNB)">
+              <span class="av-listbox__option-main">
+                <span class="av-listbox__option-city">Johannesburgo, Sudáfrica</span>
+                <span class="av-listbox__option-airport">O.R. Tambo Intl</span>
+              </span>
+              <span class="av-listbox__option-code">
+                JNB
+                <span class="av-listbox__option-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>
+                </span>
+              </span>
+            </button>
+            <button class="av-listbox__option" type="button" role="option" aria-selected="false" data-value="Abu Dabi (AUH)">
+              <span class="av-listbox__option-main">
+                <span class="av-listbox__option-city">Abu Dabi, Emiratos Árabes</span>
+                <span class="av-listbox__option-airport">Abu Dhabi International</span>
+              </span>
+              <span class="av-listbox__option-code">
+                AUH
+                <span class="av-listbox__option-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>
+                </span>
+              </span>
+            </button>
+            <button class="av-listbox__option" type="button" role="option" aria-selected="false" data-value="El Cairo (CAI)">
+              <span class="av-listbox__option-main">
+                <span class="av-listbox__option-city">El Cairo, Egipto</span>
+                <span class="av-listbox__option-airport">Cairo Intl</span>
+              </span>
+              <span class="av-listbox__option-code">
+                CAI
+                <span class="av-listbox__option-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>
+                </span>
+              </span>
+            </button>
+            <button class="av-listbox__option" type="button" role="option" aria-selected="false" data-value="Dubai (DXB)">
+              <span class="av-listbox__option-main">
+                <span class="av-listbox__option-city">Dubai, Emiratos Árabes</span>
+                <span class="av-listbox__option-airport">Dubai Intl</span>
+              </span>
+              <span class="av-listbox__option-code">
+                DXB
+                <span class="av-listbox__option-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>
+                </span>
+              </span>
+            </button>
+            <button class="av-listbox__option" type="button" role="option" aria-selected="false" data-value="Hannover (HAJ)">
+              <span class="av-listbox__option-main">
+                <span class="av-listbox__option-city">Hannover, Alemania</span>
+                <span class="av-listbox__option-airport">Hannover</span>
+              </span>
+              <span class="av-listbox__option-code">
+                HAJ
+                <span class="av-listbox__option-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>
+                </span>
+              </span>
+            </button>
+            <button class="av-listbox__option" type="button" role="option" aria-selected="false" data-value="Copenhague (CPH)">
+              <span class="av-listbox__option-main">
+                <span class="av-listbox__option-city">Copenhague, Dinamarca</span>
+                <span class="av-listbox__option-airport">Kastrup</span>
+              </span>
+              <span class="av-listbox__option-code">
+                CPH
+                <span class="av-listbox__option-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>
+                </span>
+              </span>
+            </button>
+            <button class="av-listbox__option" type="button" role="option" aria-selected="false" data-value="Buenos Aires (AEP)">
+              <span class="av-listbox__option-main">
+                <span class="av-listbox__option-city">Buenos Aires, Argentina</span>
+                <span class="av-listbox__option-airport">Aeroparque Jorge Newbery</span>
+              </span>
+              <span class="av-listbox__option-code">
+                AEP
+                <span class="av-listbox__option-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>
+                </span>
+              </span>
+            </button>
+            <button class="av-listbox__option" type="button" role="option" aria-selected="false" data-value="Cali (CLO)">
+              <span class="av-listbox__option-main">
+                <span class="av-listbox__option-city">Cali, Colombia</span>
+                <span class="av-listbox__option-airport">Aeropuerto Alfonso Bonilla Aragón</span>
+              </span>
+              <span class="av-listbox__option-code">
+                CLO
+                <span class="av-listbox__option-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>
+                </span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <span class="av-station__divider"></span>
+      <div class="av-station__field" id="av-destination-field">
+        <span class="av-station__icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M17.0834 15.8333H2.91673C2.4584 15.8333 2.0834 16.2083 2.0834 16.6667C2.0834 17.125 2.4584 17.5 2.91673 17.5H17.0834C17.5417 17.5 17.9167 17.125 17.9167 16.6667C17.9167 16.2083 17.5417 15.8333 17.0834 15.8333ZM18.3917 8.03334C18.2084 7.36667 17.5251 6.97501 16.8584 7.15001L12.4334 8.33334L7.05006 3.31667C6.82506 3.10001 6.50006 3.02501 6.20006 3.10834C5.6334 3.26667 5.36673 3.91667 5.6584 4.42501L8.52506 9.39167L4.3834 10.5L3.07506 9.46667C2.86673 9.30834 2.60006 9.25001 2.34173 9.31667L2.06673 9.39167C1.80006 9.45834 1.67506 9.76667 1.81673 10L3.3834 12.7083C3.57506 13.0333 3.9584 13.1917 4.31673 13.1L17.5001 9.56667C18.1667 9.38334 18.5667 8.70001 18.3917 8.03334Z" fill="currentColor"/></svg>
+        </span>
+        <label class="av-station__content">
+          <span class="av-station__label">Destination</span>
+          <input class="av-station__value" type="text" id="field-destination" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="av-destination-listbox" aria-autocomplete="list" />
+        </label>
+
+        <!-- Dropdown de ciudades — mismo componente que Origin (ver
+             design.md, Dropdown → Listbox), con otra muestra de ciudades
+             para no repetir contenido. Ninguna aparece seleccionada porque
+             Destination arranca vacío. -->
+        <div class="av-dropdown av-dropdown--listbox" id="av-destination-listbox" role="listbox" aria-label="Seleccionar destino">
+          <p class="av-listbox__label">Todos los aeropuertos</p>
+          <div class="av-listbox__list">
+            <button class="av-listbox__option" type="button" role="option" aria-selected="false" data-value="Madrid (MAD)">
+              <span class="av-listbox__option-main">
+                <span class="av-listbox__option-city">Madrid, España</span>
+                <span class="av-listbox__option-airport">Adolfo Suárez Barajas</span>
+              </span>
+              <span class="av-listbox__option-code">
+                MAD
+                <span class="av-listbox__option-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>
+                </span>
+              </span>
+            </button>
+            <button class="av-listbox__option" type="button" role="option" aria-selected="false" data-value="Miami (MIA)">
+              <span class="av-listbox__option-main">
+                <span class="av-listbox__option-city">Miami, Estados Unidos</span>
+                <span class="av-listbox__option-airport">Miami Intl</span>
+              </span>
+              <span class="av-listbox__option-code">
+                MIA
+                <span class="av-listbox__option-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>
+                </span>
+              </span>
+            </button>
+            <button class="av-listbox__option" type="button" role="option" aria-selected="false" data-value="Nueva York (JFK)">
+              <span class="av-listbox__option-main">
+                <span class="av-listbox__option-city">Nueva York, Estados Unidos</span>
+                <span class="av-listbox__option-airport">John F. Kennedy Intl</span>
+              </span>
+              <span class="av-listbox__option-code">
+                JFK
+                <span class="av-listbox__option-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>
+                </span>
+              </span>
+            </button>
+            <button class="av-listbox__option" type="button" role="option" aria-selected="false" data-value="Ciudad de Panamá (PTY)">
+              <span class="av-listbox__option-main">
+                <span class="av-listbox__option-city">Ciudad de Panamá, Panamá</span>
+                <span class="av-listbox__option-airport">Tocumen Intl</span>
+              </span>
+              <span class="av-listbox__option-code">
+                PTY
+                <span class="av-listbox__option-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>
+                </span>
+              </span>
+            </button>
+            <button class="av-listbox__option" type="button" role="option" aria-selected="false" data-value="Cancún (CUN)">
+              <span class="av-listbox__option-main">
+                <span class="av-listbox__option-city">Cancún, México</span>
+                <span class="av-listbox__option-airport">Cancún Intl</span>
+              </span>
+              <span class="av-listbox__option-code">
+                CUN
+                <span class="av-listbox__option-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>
+                </span>
+              </span>
+            </button>
+            <button class="av-listbox__option" type="button" role="option" aria-selected="false" data-value="Lima (LIM)">
+              <span class="av-listbox__option-main">
+                <span class="av-listbox__option-city">Lima, Perú</span>
+                <span class="av-listbox__option-airport">Jorge Chávez Intl</span>
+              </span>
+              <span class="av-listbox__option-code">
+                LIM
+                <span class="av-listbox__option-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>
+                </span>
+              </span>
+            </button>
+            <button class="av-listbox__option" type="button" role="option" aria-selected="false" data-value="Quito (UIO)">
+              <span class="av-listbox__option-main">
+                <span class="av-listbox__option-city">Quito, Ecuador</span>
+                <span class="av-listbox__option-airport">Mariscal Sucre Intl</span>
+              </span>
+              <span class="av-listbox__option-code">
+                UIO
+                <span class="av-listbox__option-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>
+                </span>
+              </span>
+            </button>
+            <button class="av-listbox__option" type="button" role="option" aria-selected="false" data-value="San Salvador (SAL)">
+              <span class="av-listbox__option-main">
+                <span class="av-listbox__option-city">San Salvador, El Salvador</span>
+                <span class="av-listbox__option-airport">Óscar Arnulfo Romero Intl</span>
+              </span>
+              <span class="av-listbox__option-code">
+                SAL
+                <span class="av-listbox__option-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>
+                </span>
+              </span>
+            </button>
+            <button class="av-listbox__option" type="button" role="option" aria-selected="false" data-value="Santiago (SCL)">
+              <span class="av-listbox__option-main">
+                <span class="av-listbox__option-city">Santiago, Chile</span>
+                <span class="av-listbox__option-airport">Arturo Merino Benítez</span>
+              </span>
+              <span class="av-listbox__option-code">
+                SCL
+                <span class="av-listbox__option-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 13 10 18 19 7"/></svg>
+                </span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- StationControl 2: ancho fijo 342px — fechas de salida/regreso.
+         Nota #4 resuelta: es un 2º StationControl pero para Fechas, no un
+         2º par origen/destino. Ícono icon/items/calendar-month (sección 7.1). -->
+    <div class="av-station av-station--fixed" id="av-dates-station">
+      <div class="av-station__field" id="av-departure-field">
+        <span class="av-station__icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 4H16V2H18V4H19C19.55 4 20.0211 4.1959 20.4131 4.58789C20.8044 4.97922 21 5.45 21 6V20C21 20.55 20.8044 21.0211 20.4131 21.4131C20.0211 21.8044 19.55 22 19 22H5C4.45 22 3.97891 21.8044 3.58691 21.4131C3.19558 21.0211 3 20.55 3 20V6C3 5.45 3.19558 4.97922 3.58691 4.58789C3.97891 4.1959 4.45001 4 5 4H6V2H8V4ZM5 20H19V10H5V20ZM8 16C8.55 16 9 16.45 9 17C9 17.55 8.55 18 8 18C7.45 18 7 17.55 7 17C7 16.45 7.45 16 8 16ZM12 16C12.55 16 13 16.45 13 17C13 17.55 12.55 18 12 18C11.45 18 11 17.55 11 17C11 16.45 11.45 16 12 16ZM16 16C16.55 16 17 16.45 17 17C17 17.55 16.55 18 16 18C15.45 18 15 17.55 15 17C15 16.45 15.45 16 16 16ZM8 12C8.55 12 9 12.45 9 13C9 13.55 8.55 14 8 14C7.45 14 7 13.55 7 13C7 12.45 7.45 12 8 12ZM12 12C12.55 12 13 12.45 13 13C13 13.55 12.55 14 12 14C11.45 14 11 13.55 11 13C11 12.45 11.45 12 12 12ZM16 12C16.55 12 17 12.45 17 13C17 13.55 16.55 14 16 14C15.45 14 15 13.55 15 13C15 12.45 15.45 12 16 12Z" fill="currentColor"/></svg>
+        </span>
+        <label class="av-station__content" for="field-departure">
+          <span class="av-station__label">Salida</span>
+          <input class="av-station__value" type="text" id="field-departure" readonly autocomplete="off" placeholder="" />
+        </label>
+      </div>
+      <span class="av-station__divider"></span>
+      <div class="av-station__field" id="av-return-field">
+        <span class="av-station__icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 4H16V2H18V4H19C19.55 4 20.0211 4.1959 20.4131 4.58789C20.8044 4.97922 21 5.45 21 6V20C21 20.55 20.8044 21.0211 20.4131 21.4131C20.0211 21.8044 19.55 22 19 22H5C4.45 22 3.97891 21.8044 3.58691 21.4131C3.19558 21.0211 3 20.55 3 20V6C3 5.45 3.19558 4.97922 3.58691 4.58789C3.97891 4.1959 4.45001 4 5 4H6V2H8V4ZM5 20H19V10H5V20ZM8 16C8.55 16 9 16.45 9 17C9 17.55 8.55 18 8 18C7.45 18 7 17.55 7 17C7 16.45 7.45 16 8 16ZM12 16C12.55 16 13 16.45 13 17C13 17.55 12.55 18 12 18C11.45 18 11 17.55 11 17C11 16.45 11.45 16 12 16ZM16 16C16.55 16 17 16.45 17 17C17 17.55 16.55 18 16 18C15.45 18 15 17.55 15 17C15 16.45 15.45 16 16 16ZM8 12C8.55 12 9 12.45 9 13C9 13.55 8.55 14 8 14C7.45 14 7 13.55 7 13C7 12.45 7.45 12 8 12ZM12 12C12.55 12 13 12.45 13 13C13 13.55 12.55 14 12 14C11.45 14 11 13.55 11 13C11 12.45 11.45 12 12 12ZM16 12C16.55 12 17 12.45 17 13C17 13.55 16.55 14 16 14C15.45 14 15 13.55 15 13C15 12.45 15.45 12 16 12Z" fill="currentColor"/></svg>
+        </span>
+        <label class="av-station__content" for="field-return">
+          <span class="av-station__label">Regreso</span>
+          <input class="av-station__value" type="text" id="field-return" readonly autocomplete="off" placeholder="" />
+        </label>
+      </div>
+    </div>
+
+    <!-- Selector de pasajeros — ícono icon/social/person_add (sección 7.1) -->
+    <div class="av-travelers" id="av-travelers">
+      <button class="av-travelers__trigger" type="button" id="av-travelers-trigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="av-travelers-dropdown" aria-label="Pasajeros: 1">
+        <span class="av-travelers__icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 12C6.79 12 5 10.21 5 8C5 5.79 6.79 4 9 4C11.21 4 13 5.79 13 8C13 10.21 11.21 12 9 12ZM18 10V7H20V10H23V12H20V15H18V12H15V10H18ZM9 14C11.67 14 17 15.34 17 18V20H1V18C1 15.34 6.33 14 9 14Z" fill="currentColor"/></svg>
+        </span>
+        <span class="av-travelers__value" id="av-travelers-value">1</span>
+        <span class="av-travelers__chevron" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.59 8.59009L12 13.1701L7.41 8.59009L6 10.0001L12 16.0001L18 10.0001L16.59 8.59009Z" fill="currentColor"/></svg>
+        </span>
+      </button>
+
+      <!-- Dropdown pasajeros — verificado contra Figma (node 22148:7394) -->
+      <div class="av-dropdown" id="av-travelers-dropdown" role="dialog" aria-label="Selección de pasajeros">
+        <p class="av-dropdown__title">Who's flying?</p>
+
+        <div class="av-dropdown__list">
+          <div class="av-dropdown__item">
+            <div class="av-dropdown__item-info">
+              <span class="av-dropdown__item-title">Adults</span>
+              <span class="av-dropdown__item-sub">From 15 years old</span>
+            </div>
+            <div class="av-stepper" data-category="adults" data-min="1" data-value="1">
+              <button class="av-stepper__btn" type="button" data-action="decrement" aria-label="Restar adulto" disabled>
+                <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5918 11.9336H18.4082V9.75H7.5918V11.9336V11.9336M13 21.6836C12.2552 21.6836 11.5316 21.6117 10.8291 21.4678C10.1266 21.3239 9.44531 21.1081 8.78516 20.8203C8.125 20.5326 7.50716 20.1982 6.93164 19.8174C6.35612 19.4365 5.82292 19.0007 5.33203 18.5098C4.84115 18.0189 4.40527 17.4857 4.02441 16.9102C3.64355 16.3346 3.30924 15.7168 3.02148 15.0566C2.73372 14.3965 2.5179 13.7152 2.37402 13.0127C2.23014 12.3102 2.1582 11.5866 2.1582 10.8418C2.1582 10.097 2.23014 9.37337 2.37402 8.6709C2.5179 7.96842 2.73372 7.28711 3.02148 6.62695C3.30924 5.9668 3.64355 5.34896 4.02441 4.77344C4.40527 4.19792 4.84115 3.66471 5.33203 3.17383C5.82292 2.68294 6.35612 2.24707 6.93164 1.86621C7.50716 1.48535 8.125 1.15104 8.78516 0.863281C9.44531 0.575521 10.1266 0.359701 10.8291 0.21582C11.5316 0.0719401 12.2552 0 13 0C13.7448 0 14.4684 0.0719401 15.1709 0.21582C15.8734 0.359701 16.5547 0.575521 17.2148 0.863281C17.875 1.15104 18.4928 1.48535 19.0684 1.86621C19.6439 2.24707 20.1771 2.68294 20.668 3.17383C21.1589 3.66471 21.5947 4.19792 21.9756 4.77344C22.3564 5.34896 22.6908 5.9668 22.9785 6.62695C23.2663 7.28711 23.4821 7.96842 23.626 8.6709C23.7699 9.37337 23.8418 10.097 23.8418 10.8418C23.8418 11.5866 23.7699 12.3102 23.626 13.0127C23.4821 13.7152 23.2663 14.3965 22.9785 15.0566C22.6908 15.7168 22.3564 16.3346 21.9756 16.9102C21.5947 17.4857 21.1589 18.0189 20.668 18.5098C20.1771 19.0007 19.6439 19.4365 19.0684 19.8174C18.4928 20.1982 17.875 20.5326 17.2148 20.8203C16.5547 21.1081 15.8734 21.3239 15.1709 21.4678C14.4684 21.6117 13.7448 21.6836 13 21.6836V21.6836M13 19.5C14.2018 19.5 15.319 19.2926 16.3516 18.8779C17.3841 18.4632 18.3151 17.8327 19.1445 16.9863C19.9909 16.1569 20.6214 15.2259 21.0361 14.1934C21.4508 13.1608 21.6582 12.0436 21.6582 10.8418C21.6582 9.63997 21.4508 8.52279 21.0361 7.49023C20.6214 6.45768 19.9909 5.52669 19.1445 4.69727C18.3151 3.85091 17.3841 3.22038 16.3516 2.80566C15.319 2.39095 14.2018 2.18359 13 2.18359C11.7982 2.18359 10.681 2.39095 9.64844 2.80566C8.61589 3.22038 7.6849 3.85091 6.85547 4.69727C6.00911 5.52669 5.37858 6.45768 4.96387 7.49023C4.54915 8.52279 4.3418 9.63997 4.3418 10.8418C4.3418 12.0436 4.54915 13.1608 4.96387 14.1934C5.37858 15.2259 6.00911 16.1569 6.85547 16.9863C7.6849 17.8327 8.61589 18.4632 9.64844 18.8779C10.681 19.2926 11.7982 19.5 13 19.5V19.5" fill="currentColor"/></svg>
+              </button>
+              <span class="av-stepper__value">1</span>
+              <button class="av-stepper__btn" type="button" data-action="increment" aria-label="Sumar adulto">
+                <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.9082 16.25H14.0918V11.9336H18.4082V9.75H14.0918V5.43359H11.9082V9.75H7.5918V11.9336H11.9082V16.25V16.25V16.25M13 21.6836C12.2552 21.6836 11.5316 21.6117 10.8291 21.4678C10.1266 21.3239 9.44531 21.1081 8.78516 20.8203C8.125 20.5326 7.50716 20.1982 6.93164 19.8174C6.35612 19.4365 5.82292 19.0007 5.33203 18.5098C4.84115 18.0189 4.40527 17.4857 4.02441 16.9102C3.64355 16.3346 3.30924 15.7168 3.02148 15.0566C2.73372 14.3965 2.5179 13.7152 2.37402 13.0127C2.23014 12.3102 2.1582 11.5866 2.1582 10.8418C2.1582 10.097 2.23014 9.37337 2.37402 8.6709C2.5179 7.96842 2.73372 7.28711 3.02148 6.62695C3.30924 5.9668 3.64355 5.34896 4.02441 4.77344C4.40527 4.19792 4.84115 3.66471 5.33203 3.17383C5.82292 2.68294 6.35612 2.24707 6.93164 1.86621C7.50716 1.48535 8.125 1.15104 8.78516 0.863281C9.44531 0.575521 10.1266 0.359701 10.8291 0.21582C11.5316 0.0719401 12.2552 0 13 0C13.7448 0 14.4684 0.0719401 15.1709 0.21582C15.8734 0.359701 16.5547 0.575521 17.2148 0.863281C17.875 1.15104 18.4928 1.48535 19.0684 1.86621C19.6439 2.24707 20.1771 2.68294 20.668 3.17383C21.1589 3.66471 21.5947 4.19792 21.9756 4.77344C22.3564 5.34896 22.6908 5.9668 22.9785 6.62695C23.2663 7.28711 23.4821 7.96842 23.626 8.6709C23.7699 9.37337 23.8418 10.097 23.8418 10.8418C23.8418 11.5866 23.7699 12.3102 23.626 13.0127C23.4821 13.7152 23.2663 14.3965 22.9785 15.0566C22.6908 15.7168 22.3564 16.3346 21.9756 16.9102C21.5947 17.4857 21.1589 18.0189 20.668 18.5098C20.1771 19.0007 19.6439 19.4365 19.0684 19.8174C18.4928 20.1982 17.875 20.5326 17.2148 20.8203C16.5547 21.1081 15.8734 21.3239 15.1709 21.4678C14.4684 21.6117 13.7448 21.6836 13 21.6836V21.6836M13 19.5C14.2018 19.5 15.319 19.2926 16.3516 18.8779C17.3841 18.4632 18.3151 17.8327 19.1445 16.9863C19.9909 16.1569 20.6214 15.2259 21.0361 14.1934C21.4508 13.1608 21.6582 12.0436 21.6582 10.8418C21.6582 9.63997 21.4508 8.52279 21.0361 7.49023C20.6214 6.45768 19.9909 5.52669 19.1445 4.69727C18.3151 3.85091 17.3841 3.22038 16.3516 2.80566C15.319 2.39095 14.2018 2.18359 13 2.18359C11.7982 2.18359 10.681 2.39095 9.64844 2.80566C8.61589 3.22038 7.6849 3.85091 6.85547 4.69727C6.00911 5.52669 5.37858 6.45768 4.96387 7.49023C4.54915 8.52279 4.3418 9.63997 4.3418 10.8418C4.3418 12.0436 4.54915 13.1608 4.96387 14.1934C5.37858 15.2259 6.00911 16.1569 6.85547 16.9863C7.6849 17.8327 8.61589 18.4632 9.64844 18.8779C10.681 19.2926 11.7982 19.5 13 19.5V19.5" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="av-dropdown__item">
+            <div class="av-dropdown__item-info">
+              <span class="av-dropdown__item-title">Youths</span>
+              <span class="av-dropdown__item-sub">12 to 14 years old</span>
+            </div>
+            <div class="av-stepper" data-category="youths" data-min="0" data-value="0">
+              <button class="av-stepper__btn" type="button" data-action="decrement" aria-label="Restar youth" disabled>
+                <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5918 11.9336H18.4082V9.75H7.5918V11.9336V11.9336M13 21.6836C12.2552 21.6836 11.5316 21.6117 10.8291 21.4678C10.1266 21.3239 9.44531 21.1081 8.78516 20.8203C8.125 20.5326 7.50716 20.1982 6.93164 19.8174C6.35612 19.4365 5.82292 19.0007 5.33203 18.5098C4.84115 18.0189 4.40527 17.4857 4.02441 16.9102C3.64355 16.3346 3.30924 15.7168 3.02148 15.0566C2.73372 14.3965 2.5179 13.7152 2.37402 13.0127C2.23014 12.3102 2.1582 11.5866 2.1582 10.8418C2.1582 10.097 2.23014 9.37337 2.37402 8.6709C2.5179 7.96842 2.73372 7.28711 3.02148 6.62695C3.30924 5.9668 3.64355 5.34896 4.02441 4.77344C4.40527 4.19792 4.84115 3.66471 5.33203 3.17383C5.82292 2.68294 6.35612 2.24707 6.93164 1.86621C7.50716 1.48535 8.125 1.15104 8.78516 0.863281C9.44531 0.575521 10.1266 0.359701 10.8291 0.21582C11.5316 0.0719401 12.2552 0 13 0C13.7448 0 14.4684 0.0719401 15.1709 0.21582C15.8734 0.359701 16.5547 0.575521 17.2148 0.863281C17.875 1.15104 18.4928 1.48535 19.0684 1.86621C19.6439 2.24707 20.1771 2.68294 20.668 3.17383C21.1589 3.66471 21.5947 4.19792 21.9756 4.77344C22.3564 5.34896 22.6908 5.9668 22.9785 6.62695C23.2663 7.28711 23.4821 7.96842 23.626 8.6709C23.7699 9.37337 23.8418 10.097 23.8418 10.8418C23.8418 11.5866 23.7699 12.3102 23.626 13.0127C23.4821 13.7152 23.2663 14.3965 22.9785 15.0566C22.6908 15.7168 22.3564 16.3346 21.9756 16.9102C21.5947 17.4857 21.1589 18.0189 20.668 18.5098C20.1771 19.0007 19.6439 19.4365 19.0684 19.8174C18.4928 20.1982 17.875 20.5326 17.2148 20.8203C16.5547 21.1081 15.8734 21.3239 15.1709 21.4678C14.4684 21.6117 13.7448 21.6836 13 21.6836V21.6836M13 19.5C14.2018 19.5 15.319 19.2926 16.3516 18.8779C17.3841 18.4632 18.3151 17.8327 19.1445 16.9863C19.9909 16.1569 20.6214 15.2259 21.0361 14.1934C21.4508 13.1608 21.6582 12.0436 21.6582 10.8418C21.6582 9.63997 21.4508 8.52279 21.0361 7.49023C20.6214 6.45768 19.9909 5.52669 19.1445 4.69727C18.3151 3.85091 17.3841 3.22038 16.3516 2.80566C15.319 2.39095 14.2018 2.18359 13 2.18359C11.7982 2.18359 10.681 2.39095 9.64844 2.80566C8.61589 3.22038 7.6849 3.85091 6.85547 4.69727C6.00911 5.52669 5.37858 6.45768 4.96387 7.49023C4.54915 8.52279 4.3418 9.63997 4.3418 10.8418C4.3418 12.0436 4.54915 13.1608 4.96387 14.1934C5.37858 15.2259 6.00911 16.1569 6.85547 16.9863C7.6849 17.8327 8.61589 18.4632 9.64844 18.8779C10.681 19.2926 11.7982 19.5 13 19.5V19.5" fill="currentColor"/></svg>
+              </button>
+              <span class="av-stepper__value">0</span>
+              <button class="av-stepper__btn" type="button" data-action="increment" aria-label="Sumar youth">
+                <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.9082 16.25H14.0918V11.9336H18.4082V9.75H14.0918V5.43359H11.9082V9.75H7.5918V11.9336H11.9082V16.25V16.25V16.25M13 21.6836C12.2552 21.6836 11.5316 21.6117 10.8291 21.4678C10.1266 21.3239 9.44531 21.1081 8.78516 20.8203C8.125 20.5326 7.50716 20.1982 6.93164 19.8174C6.35612 19.4365 5.82292 19.0007 5.33203 18.5098C4.84115 18.0189 4.40527 17.4857 4.02441 16.9102C3.64355 16.3346 3.30924 15.7168 3.02148 15.0566C2.73372 14.3965 2.5179 13.7152 2.37402 13.0127C2.23014 12.3102 2.1582 11.5866 2.1582 10.8418C2.1582 10.097 2.23014 9.37337 2.37402 8.6709C2.5179 7.96842 2.73372 7.28711 3.02148 6.62695C3.30924 5.9668 3.64355 5.34896 4.02441 4.77344C4.40527 4.19792 4.84115 3.66471 5.33203 3.17383C5.82292 2.68294 6.35612 2.24707 6.93164 1.86621C7.50716 1.48535 8.125 1.15104 8.78516 0.863281C9.44531 0.575521 10.1266 0.359701 10.8291 0.21582C11.5316 0.0719401 12.2552 0 13 0C13.7448 0 14.4684 0.0719401 15.1709 0.21582C15.8734 0.359701 16.5547 0.575521 17.2148 0.863281C17.875 1.15104 18.4928 1.48535 19.0684 1.86621C19.6439 2.24707 20.1771 2.68294 20.668 3.17383C21.1589 3.66471 21.5947 4.19792 21.9756 4.77344C22.3564 5.34896 22.6908 5.9668 22.9785 6.62695C23.2663 7.28711 23.4821 7.96842 23.626 8.6709C23.7699 9.37337 23.8418 10.097 23.8418 10.8418C23.8418 11.5866 23.7699 12.3102 23.626 13.0127C23.4821 13.7152 23.2663 14.3965 22.9785 15.0566C22.6908 15.7168 22.3564 16.3346 21.9756 16.9102C21.5947 17.4857 21.1589 18.0189 20.668 18.5098C20.1771 19.0007 19.6439 19.4365 19.0684 19.8174C18.4928 20.1982 17.875 20.5326 17.2148 20.8203C16.5547 21.1081 15.8734 21.3239 15.1709 21.4678C14.4684 21.6117 13.7448 21.6836 13 21.6836V21.6836M13 19.5C14.2018 19.5 15.319 19.2926 16.3516 18.8779C17.3841 18.4632 18.3151 17.8327 19.1445 16.9863C19.9909 16.1569 20.6214 15.2259 21.0361 14.1934C21.4508 13.1608 21.6582 12.0436 21.6582 10.8418C21.6582 9.63997 21.4508 8.52279 21.0361 7.49023C20.6214 6.45768 19.9909 5.52669 19.1445 4.69727C18.3151 3.85091 17.3841 3.22038 16.3516 2.80566C15.319 2.39095 14.2018 2.18359 13 2.18359C11.7982 2.18359 10.681 2.39095 9.64844 2.80566C8.61589 3.22038 7.6849 3.85091 6.85547 4.69727C6.00911 5.52669 5.37858 6.45768 4.96387 7.49023C4.54915 8.52279 4.3418 9.63997 4.3418 10.8418C4.3418 12.0436 4.54915 13.1608 4.96387 14.1934C5.37858 15.2259 6.00911 16.1569 6.85547 16.9863C7.6849 17.8327 8.61589 18.4632 9.64844 18.8779C10.681 19.2926 11.7982 19.5 13 19.5V19.5" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="av-dropdown__item">
+            <div class="av-dropdown__item-info">
+              <span class="av-dropdown__item-title">Children</span>
+              <span class="av-dropdown__item-sub">2 - 11 years old</span>
+            </div>
+            <div class="av-stepper" data-category="children" data-min="0" data-value="0">
+              <button class="av-stepper__btn" type="button" data-action="decrement" aria-label="Restar children" disabled>
+                <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5918 11.9336H18.4082V9.75H7.5918V11.9336V11.9336M13 21.6836C12.2552 21.6836 11.5316 21.6117 10.8291 21.4678C10.1266 21.3239 9.44531 21.1081 8.78516 20.8203C8.125 20.5326 7.50716 20.1982 6.93164 19.8174C6.35612 19.4365 5.82292 19.0007 5.33203 18.5098C4.84115 18.0189 4.40527 17.4857 4.02441 16.9102C3.64355 16.3346 3.30924 15.7168 3.02148 15.0566C2.73372 14.3965 2.5179 13.7152 2.37402 13.0127C2.23014 12.3102 2.1582 11.5866 2.1582 10.8418C2.1582 10.097 2.23014 9.37337 2.37402 8.6709C2.5179 7.96842 2.73372 7.28711 3.02148 6.62695C3.30924 5.9668 3.64355 5.34896 4.02441 4.77344C4.40527 4.19792 4.84115 3.66471 5.33203 3.17383C5.82292 2.68294 6.35612 2.24707 6.93164 1.86621C7.50716 1.48535 8.125 1.15104 8.78516 0.863281C9.44531 0.575521 10.1266 0.359701 10.8291 0.21582C11.5316 0.0719401 12.2552 0 13 0C13.7448 0 14.4684 0.0719401 15.1709 0.21582C15.8734 0.359701 16.5547 0.575521 17.2148 0.863281C17.875 1.15104 18.4928 1.48535 19.0684 1.86621C19.6439 2.24707 20.1771 2.68294 20.668 3.17383C21.1589 3.66471 21.5947 4.19792 21.9756 4.77344C22.3564 5.34896 22.6908 5.9668 22.9785 6.62695C23.2663 7.28711 23.4821 7.96842 23.626 8.6709C23.7699 9.37337 23.8418 10.097 23.8418 10.8418C23.8418 11.5866 23.7699 12.3102 23.626 13.0127C23.4821 13.7152 23.2663 14.3965 22.9785 15.0566C22.6908 15.7168 22.3564 16.3346 21.9756 16.9102C21.5947 17.4857 21.1589 18.0189 20.668 18.5098C20.1771 19.0007 19.6439 19.4365 19.0684 19.8174C18.4928 20.1982 17.875 20.5326 17.2148 20.8203C16.5547 21.1081 15.8734 21.3239 15.1709 21.4678C14.4684 21.6117 13.7448 21.6836 13 21.6836V21.6836M13 19.5C14.2018 19.5 15.319 19.2926 16.3516 18.8779C17.3841 18.4632 18.3151 17.8327 19.1445 16.9863C19.9909 16.1569 20.6214 15.2259 21.0361 14.1934C21.4508 13.1608 21.6582 12.0436 21.6582 10.8418C21.6582 9.63997 21.4508 8.52279 21.0361 7.49023C20.6214 6.45768 19.9909 5.52669 19.1445 4.69727C18.3151 3.85091 17.3841 3.22038 16.3516 2.80566C15.319 2.39095 14.2018 2.18359 13 2.18359C11.7982 2.18359 10.681 2.39095 9.64844 2.80566C8.61589 3.22038 7.6849 3.85091 6.85547 4.69727C6.00911 5.52669 5.37858 6.45768 4.96387 7.49023C4.54915 8.52279 4.3418 9.63997 4.3418 10.8418C4.3418 12.0436 4.54915 13.1608 4.96387 14.1934C5.37858 15.2259 6.00911 16.1569 6.85547 16.9863C7.6849 17.8327 8.61589 18.4632 9.64844 18.8779C10.681 19.2926 11.7982 19.5 13 19.5V19.5" fill="currentColor"/></svg>
+              </button>
+              <span class="av-stepper__value">0</span>
+              <button class="av-stepper__btn" type="button" data-action="increment" aria-label="Sumar children">
+                <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.9082 16.25H14.0918V11.9336H18.4082V9.75H14.0918V5.43359H11.9082V9.75H7.5918V11.9336H11.9082V16.25V16.25V16.25M13 21.6836C12.2552 21.6836 11.5316 21.6117 10.8291 21.4678C10.1266 21.3239 9.44531 21.1081 8.78516 20.8203C8.125 20.5326 7.50716 20.1982 6.93164 19.8174C6.35612 19.4365 5.82292 19.0007 5.33203 18.5098C4.84115 18.0189 4.40527 17.4857 4.02441 16.9102C3.64355 16.3346 3.30924 15.7168 3.02148 15.0566C2.73372 14.3965 2.5179 13.7152 2.37402 13.0127C2.23014 12.3102 2.1582 11.5866 2.1582 10.8418C2.1582 10.097 2.23014 9.37337 2.37402 8.6709C2.5179 7.96842 2.73372 7.28711 3.02148 6.62695C3.30924 5.9668 3.64355 5.34896 4.02441 4.77344C4.40527 4.19792 4.84115 3.66471 5.33203 3.17383C5.82292 2.68294 6.35612 2.24707 6.93164 1.86621C7.50716 1.48535 8.125 1.15104 8.78516 0.863281C9.44531 0.575521 10.1266 0.359701 10.8291 0.21582C11.5316 0.0719401 12.2552 0 13 0C13.7448 0 14.4684 0.0719401 15.1709 0.21582C15.8734 0.359701 16.5547 0.575521 17.2148 0.863281C17.875 1.15104 18.4928 1.48535 19.0684 1.86621C19.6439 2.24707 20.1771 2.68294 20.668 3.17383C21.1589 3.66471 21.5947 4.19792 21.9756 4.77344C22.3564 5.34896 22.6908 5.9668 22.9785 6.62695C23.2663 7.28711 23.4821 7.96842 23.626 8.6709C23.7699 9.37337 23.8418 10.097 23.8418 10.8418C23.8418 11.5866 23.7699 12.3102 23.626 13.0127C23.4821 13.7152 23.2663 14.3965 22.9785 15.0566C22.6908 15.7168 22.3564 16.3346 21.9756 16.9102C21.5947 17.4857 21.1589 18.0189 20.668 18.5098C20.1771 19.0007 19.6439 19.4365 19.0684 19.8174C18.4928 20.1982 17.875 20.5326 17.2148 20.8203C16.5547 21.1081 15.8734 21.3239 15.1709 21.4678C14.4684 21.6117 13.7448 21.6836 13 21.6836V21.6836M13 19.5C14.2018 19.5 15.319 19.2926 16.3516 18.8779C17.3841 18.4632 18.3151 17.8327 19.1445 16.9863C19.9909 16.1569 20.6214 15.2259 21.0361 14.1934C21.4508 13.1608 21.6582 12.0436 21.6582 10.8418C21.6582 9.63997 21.4508 8.52279 21.0361 7.49023C20.6214 6.45768 19.9909 5.52669 19.1445 4.69727C18.3151 3.85091 17.3841 3.22038 16.3516 2.80566C15.319 2.39095 14.2018 2.18359 13 2.18359C11.7982 2.18359 10.681 2.39095 9.64844 2.80566C8.61589 3.22038 7.6849 3.85091 6.85547 4.69727C6.00911 5.52669 5.37858 6.45768 4.96387 7.49023C4.54915 8.52279 4.3418 9.63997 4.3418 10.8418C4.3418 12.0436 4.54915 13.1608 4.96387 14.1934C5.37858 15.2259 6.00911 16.1569 6.85547 16.9863C7.6849 17.8327 8.61589 18.4632 9.64844 18.8779C10.681 19.2926 11.7982 19.5 13 19.5V19.5" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="av-dropdown__item">
+            <div class="av-dropdown__item-info">
+              <span class="av-dropdown__item-title">Infants</span>
+              <span class="av-dropdown__item-sub">Under 2 years old</span>
+            </div>
+            <div class="av-stepper" data-category="infants" data-min="0" data-value="0">
+              <button class="av-stepper__btn" type="button" data-action="decrement" aria-label="Restar infant" disabled>
+                <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5918 11.9336H18.4082V9.75H7.5918V11.9336V11.9336M13 21.6836C12.2552 21.6836 11.5316 21.6117 10.8291 21.4678C10.1266 21.3239 9.44531 21.1081 8.78516 20.8203C8.125 20.5326 7.50716 20.1982 6.93164 19.8174C6.35612 19.4365 5.82292 19.0007 5.33203 18.5098C4.84115 18.0189 4.40527 17.4857 4.02441 16.9102C3.64355 16.3346 3.30924 15.7168 3.02148 15.0566C2.73372 14.3965 2.5179 13.7152 2.37402 13.0127C2.23014 12.3102 2.1582 11.5866 2.1582 10.8418C2.1582 10.097 2.23014 9.37337 2.37402 8.6709C2.5179 7.96842 2.73372 7.28711 3.02148 6.62695C3.30924 5.9668 3.64355 5.34896 4.02441 4.77344C4.40527 4.19792 4.84115 3.66471 5.33203 3.17383C5.82292 2.68294 6.35612 2.24707 6.93164 1.86621C7.50716 1.48535 8.125 1.15104 8.78516 0.863281C9.44531 0.575521 10.1266 0.359701 10.8291 0.21582C11.5316 0.0719401 12.2552 0 13 0C13.7448 0 14.4684 0.0719401 15.1709 0.21582C15.8734 0.359701 16.5547 0.575521 17.2148 0.863281C17.875 1.15104 18.4928 1.48535 19.0684 1.86621C19.6439 2.24707 20.1771 2.68294 20.668 3.17383C21.1589 3.66471 21.5947 4.19792 21.9756 4.77344C22.3564 5.34896 22.6908 5.9668 22.9785 6.62695C23.2663 7.28711 23.4821 7.96842 23.626 8.6709C23.7699 9.37337 23.8418 10.097 23.8418 10.8418C23.8418 11.5866 23.7699 12.3102 23.626 13.0127C23.4821 13.7152 23.2663 14.3965 22.9785 15.0566C22.6908 15.7168 22.3564 16.3346 21.9756 16.9102C21.5947 17.4857 21.1589 18.0189 20.668 18.5098C20.1771 19.0007 19.6439 19.4365 19.0684 19.8174C18.4928 20.1982 17.875 20.5326 17.2148 20.8203C16.5547 21.1081 15.8734 21.3239 15.1709 21.4678C14.4684 21.6117 13.7448 21.6836 13 21.6836V21.6836M13 19.5C14.2018 19.5 15.319 19.2926 16.3516 18.8779C17.3841 18.4632 18.3151 17.8327 19.1445 16.9863C19.9909 16.1569 20.6214 15.2259 21.0361 14.1934C21.4508 13.1608 21.6582 12.0436 21.6582 10.8418C21.6582 9.63997 21.4508 8.52279 21.0361 7.49023C20.6214 6.45768 19.9909 5.52669 19.1445 4.69727C18.3151 3.85091 17.3841 3.22038 16.3516 2.80566C15.319 2.39095 14.2018 2.18359 13 2.18359C11.7982 2.18359 10.681 2.39095 9.64844 2.80566C8.61589 3.22038 7.6849 3.85091 6.85547 4.69727C6.00911 5.52669 5.37858 6.45768 4.96387 7.49023C4.54915 8.52279 4.3418 9.63997 4.3418 10.8418C4.3418 12.0436 4.54915 13.1608 4.96387 14.1934C5.37858 15.2259 6.00911 16.1569 6.85547 16.9863C7.6849 17.8327 8.61589 18.4632 9.64844 18.8779C10.681 19.2926 11.7982 19.5 13 19.5V19.5" fill="currentColor"/></svg>
+              </button>
+              <span class="av-stepper__value">0</span>
+              <button class="av-stepper__btn" type="button" data-action="increment" aria-label="Sumar infant">
+                <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.9082 16.25H14.0918V11.9336H18.4082V9.75H14.0918V5.43359H11.9082V9.75H7.5918V11.9336H11.9082V16.25V16.25V16.25M13 21.6836C12.2552 21.6836 11.5316 21.6117 10.8291 21.4678C10.1266 21.3239 9.44531 21.1081 8.78516 20.8203C8.125 20.5326 7.50716 20.1982 6.93164 19.8174C6.35612 19.4365 5.82292 19.0007 5.33203 18.5098C4.84115 18.0189 4.40527 17.4857 4.02441 16.9102C3.64355 16.3346 3.30924 15.7168 3.02148 15.0566C2.73372 14.3965 2.5179 13.7152 2.37402 13.0127C2.23014 12.3102 2.1582 11.5866 2.1582 10.8418C2.1582 10.097 2.23014 9.37337 2.37402 8.6709C2.5179 7.96842 2.73372 7.28711 3.02148 6.62695C3.30924 5.9668 3.64355 5.34896 4.02441 4.77344C4.40527 4.19792 4.84115 3.66471 5.33203 3.17383C5.82292 2.68294 6.35612 2.24707 6.93164 1.86621C7.50716 1.48535 8.125 1.15104 8.78516 0.863281C9.44531 0.575521 10.1266 0.359701 10.8291 0.21582C11.5316 0.0719401 12.2552 0 13 0C13.7448 0 14.4684 0.0719401 15.1709 0.21582C15.8734 0.359701 16.5547 0.575521 17.2148 0.863281C17.875 1.15104 18.4928 1.48535 19.0684 1.86621C19.6439 2.24707 20.1771 2.68294 20.668 3.17383C21.1589 3.66471 21.5947 4.19792 21.9756 4.77344C22.3564 5.34896 22.6908 5.9668 22.9785 6.62695C23.2663 7.28711 23.4821 7.96842 23.626 8.6709C23.7699 9.37337 23.8418 10.097 23.8418 10.8418C23.8418 11.5866 23.7699 12.3102 23.626 13.0127C23.4821 13.7152 23.2663 14.3965 22.9785 15.0566C22.6908 15.7168 22.3564 16.3346 21.9756 16.9102C21.5947 17.4857 21.1589 18.0189 20.668 18.5098C20.1771 19.0007 19.6439 19.4365 19.0684 19.8174C18.4928 20.1982 17.875 20.5326 17.2148 20.8203C16.5547 21.1081 15.8734 21.3239 15.1709 21.4678C14.4684 21.6117 13.7448 21.6836 13 21.6836V21.6836M13 19.5C14.2018 19.5 15.319 19.2926 16.3516 18.8779C17.3841 18.4632 18.3151 17.8327 19.1445 16.9863C19.9909 16.1569 20.6214 15.2259 21.0361 14.1934C21.4508 13.1608 21.6582 12.0436 21.6582 10.8418C21.6582 9.63997 21.4508 8.52279 21.0361 7.49023C20.6214 6.45768 19.9909 5.52669 19.1445 4.69727C18.3151 3.85091 17.3841 3.22038 16.3516 2.80566C15.319 2.39095 14.2018 2.18359 13 2.18359C11.7982 2.18359 10.681 2.39095 9.64844 2.80566C8.61589 3.22038 7.6849 3.85091 6.85547 4.69727C6.00911 5.52669 5.37858 6.45768 4.96387 7.49023C4.54915 8.52279 4.3418 9.63997 4.3418 10.8418C4.3418 12.0436 4.54915 13.1608 4.96387 14.1934C5.37858 15.2259 6.00911 16.1569 6.85547 16.9863C7.6849 17.8327 8.61589 18.4632 9.64844 18.8779C10.681 19.2926 11.7982 19.5 13 19.5V19.5" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ⚠ Orden distinto al de Figma (que trae Confirm antes del banner):
+             a pedido, acá el banner/alert queda arriba y Confirm abajo. -->
+        <div class="av-dropdown__banner" id="av-travelers-banner">
+          <span class="av-dropdown__banner-icon" aria-hidden="true">
+            <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.99935 1.6665C5.39935 1.6665 1.66602 5.39984 1.66602 9.99984C1.66602 14.5998 5.39935 18.3332 9.99935 18.3332C14.5993 18.3332 18.3327 14.5998 18.3327 9.99984C18.3327 5.39984 14.5993 1.6665 9.99935 1.6665V1.6665M10.8327 7.49984H9.16602V5.83317H10.8327V7.49984V7.49984M10.8327 14.1665H9.16602V9.1665H10.8327V14.1665V14.1665" fill="currentColor"/></svg>
+          </span>
+          <p class="av-dropdown__banner-text"><a href="#">Learn</a> about the policy for youths.</p>
+          <button class="av-dropdown__banner-close" type="button" aria-label="Cerrar aviso">
+            <svg viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.6673 5.06354L11.7273 4.12354L8.00065 7.8502L4.27398 4.12354L3.33398 5.06354L7.06065 8.7902L3.33398 12.5169L4.27398 13.4569L8.00065 9.7302L11.7273 13.4569L12.6673 12.5169L8.94065 8.7902L12.6673 5.06354V5.06354" fill="currentColor"/></svg>
+          </button>
+        </div>
+
+        <button class="av-dropdown__confirm" type="button" id="av-travelers-confirm">Confirm</button>
+      </div>
+    </div>
+
+    <!-- Botón Search -->
+    <button class="av-search__button" type="button" id="av-search-submit">Search</button>
+
+  </div>
+
+</div>
+
+<!-- Loading screen — Figma node 22177:7662 — 3 dots verdes #27AE60 -->
+<div class="av-loading-screen" id="av-loading-screen" role="status" aria-live="polite" aria-label="Buscando vuelos">
+  <div class="av-loading-dots" aria-hidden="true">
+    <div class="av-loading-dots__dot"></div>
+    <div class="av-loading-dots__dot"></div>
+    <div class="av-loading-dots__dot"></div>
+  </div>
+  <span class="av-loading-label">Buscando vuelos...</span>
+</div>
+
+<!-- Calendar dropdown — position:fixed, rendered by JS. Must be BEFORE <script> so getElementById finds it when the IIFE runs -->
+<div class="av-calendar" id="av-calendar" role="dialog" aria-modal="false" aria-label="Seleccionar fechas de vuelo"></div>
+
+<script>
+  /* Validación mínima de estados: marca .has-error en los campos vacíos
+     al tocar Search, y lo limpia apenas el campo recibe contenido válido.
+     No hay lógica de resultados/backend — solo demuestra el estado error
+     del Input (sección 8 design.md) sobre StationControl. */
+  (function () {
+    var REQUIRED_IDS = ['field-origin', 'field-destination', 'field-departure', 'field-return'];
+    var inputs = REQUIRED_IDS.map(function (id) { return document.getElementById(id); });
+
+    function fieldEl(input) { return input.closest('.av-station__field'); }
+    function stationEl(input) { return input.closest('.av-station'); }
+
+    function syncFilled(input) {
+      fieldEl(input).classList.toggle('is-filled', input.value.trim().length > 0);
+    }
+
+    function syncStationError(station) {
+      var anyError = station.querySelector('.av-station__field.has-error') !== null;
+      station.classList.toggle('has-error', anyError);
+    }
+
+    function clearError(input) {
+      var field = fieldEl(input);
+      if (field.classList.contains('has-error')) {
+        field.classList.remove('has-error');
+        syncStationError(stationEl(input));
+      }
+    }
+
+    function markError(input) {
+      fieldEl(input).classList.add('has-error');
+      syncStationError(stationEl(input));
+    }
+
+    inputs.forEach(function (input) {
+      syncFilled(input); // estado inicial (ej. Origin ya viene con valor)
+      input.addEventListener('input', function () {
+        syncFilled(input);
+        if (input.value.trim().length > 0) clearError(input);
+      });
+    });
+
+    var loadingScreen = document.getElementById('av-loading-screen');
+
+    document.getElementById('av-search-submit').addEventListener('click', function () {
+      var firstInvalid = null;
+      inputs.forEach(function (input) {
+        if (input.value.trim().length === 0) {
+          markError(input);
+          if (!firstInvalid) firstInvalid = input;
+        } else {
+          clearError(input);
+        }
+      });
+
+      if (firstInvalid) {
+        firstInvalid.focus();
+        return;
+      }
+
+      // Todos los campos completos — mostrar loading 5 segundos
+      loadingScreen.classList.add('is-visible');
+      setTimeout(function () {
+        loadingScreen.classList.remove('is-visible');
+      }, 5000);
+    });
+  })();
+
+  /* PillToggle (One way / Round trip) y checkbox (Book with Avianca
+     Credits): agregan el estado "selected" — antes era markup estático
+     sin ningún manejador de eventos. */
+  (function () {
+    function selectPillOption(option) {
+      var group = option.closest('.av-pill--toggle');
+      group.querySelectorAll('.av-pill__option').forEach(function (opt) {
+        var selected = opt === option;
+        opt.classList.toggle('is-selected', selected);
+        opt.setAttribute('aria-checked', selected ? 'true' : 'false');
+        opt.querySelector('.av-radio').classList.toggle('is-checked', selected);
+      });
+    }
+
+    document.querySelectorAll('.av-pill--toggle .av-pill__option').forEach(function (option) {
+      option.addEventListener('click', function () { selectPillOption(option); });
+      option.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          selectPillOption(option);
+        }
+      });
+    });
+
+    var aviancaCredits = document.getElementById('av-avianca-credits');
+    aviancaCredits.addEventListener('change', function () {
+      aviancaCredits.closest('.av-pill').querySelector('.av-checkbox')
+        .classList.toggle('is-checked', aviancaCredits.checked);
+    });
+  })();
+
+  /* Dropdown de pasajeros (componente nuevo, ver design.md): abre/cierra
+     al clickear el trigger, se cierra con click afuera o Escape, y los
+     steppers +/- respetan el mínimo de cada categoría (data-min). */
+  (function () {
+    var wrapper = document.getElementById('av-travelers');
+    var trigger = document.getElementById('av-travelers-trigger');
+    var dropdown = document.getElementById('av-travelers-dropdown');
+    var valueEl = document.getElementById('av-travelers-value');
+    var steppers = dropdown.querySelectorAll('.av-stepper');
+
+    function totalTravelers() {
+      var total = 0;
+      steppers.forEach(function (s) { total += Number(s.dataset.value); });
+      return total;
+    }
+
+    function syncTravelersSummary() {
+      var total = totalTravelers();
+      valueEl.textContent = total;
+      trigger.setAttribute('aria-label', 'Pasajeros: ' + total);
+    }
+
+    function openDropdown() {
+      wrapper.classList.add('is-open');
+      trigger.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeDropdown() {
+      wrapper.classList.remove('is-open');
+      trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    trigger.addEventListener('click', function () {
+      if (wrapper.classList.contains('is-open')) closeDropdown();
+      else openDropdown();
+    });
+
+    document.addEventListener('click', function (e) {
+      if (wrapper.classList.contains('is-open') && !wrapper.contains(e.target)) closeDropdown();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && wrapper.classList.contains('is-open')) {
+        closeDropdown();
+        trigger.focus();
+      }
+    });
+
+    steppers.forEach(function (stepper) {
+      var min = Number(stepper.dataset.min);
+      var valueSpan = stepper.querySelector('.av-stepper__value');
+      var decBtn = stepper.querySelector('[data-action="decrement"]');
+      var incBtn = stepper.querySelector('[data-action="increment"]');
+
+      function render() {
+        var value = Number(stepper.dataset.value);
+        valueSpan.textContent = value;
+        decBtn.disabled = value <= min;
+        syncTravelersSummary();
+      }
+
+      decBtn.addEventListener('click', function () {
+        var value = Number(stepper.dataset.value);
+        if (value > min) {
+          stepper.dataset.value = value - 1;
+          render();
+        }
+      });
+
+      incBtn.addEventListener('click', function () {
+        stepper.dataset.value = Number(stepper.dataset.value) + 1;
+        render();
+      });
+    });
+
+    document.getElementById('av-travelers-confirm').addEventListener('click', function () {
+      closeDropdown();
+      trigger.focus();
+    });
+
+    document.getElementById('av-travelers-banner').querySelector('.av-dropdown__banner-close')
+      .addEventListener('click', function () {
+        document.getElementById('av-travelers-banner').style.display = 'none';
+      });
+
+    syncTravelersSummary();
+  })();
+
+  /* Dropdown de ciudades — Origin y Destination comparten esta misma
+     lógica (ver design.md, Dropdown → Listbox). Abre al enfocar/clickear
+     el input, cierra con click afuera, Escape o al seleccionar una
+     ciudad. No incluye filtrado por texto todavía — solo abrir/cerrar/
+     seleccionar, que es lo pedido en esta iteración. */
+  function setupCityListbox(fieldId, inputId, listboxId) {
+    var field = document.getElementById(fieldId);
+    var input = document.getElementById(inputId);
+    var listbox = document.getElementById(listboxId);
+    var options = listbox.querySelectorAll('.av-listbox__option');
+
+    function positionListbox() {
+      var rect = field.getBoundingClientRect();
+      listbox.style.top = (rect.bottom + 8) + 'px';
+      listbox.style.left = rect.left + 'px';
+    }
+
+    function openListbox() {
+      if (field.classList.contains('is-open')) return;
+      positionListbox(); // position:fixed — se calcula recién al abrir, ver nota en el CSS
+      field.classList.add('is-open');
+      input.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeListbox() {
+      field.classList.remove('is-open');
+      input.setAttribute('aria-expanded', 'false');
+    }
+
+    input.addEventListener('focus', openListbox);
+    input.addEventListener('click', openListbox);
+
+    document.addEventListener('click', function (e) {
+      if (field.classList.contains('is-open') && !field.contains(e.target)) closeListbox();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && field.classList.contains('is-open')) {
+        closeListbox();
+        input.blur();
+      }
+    });
+
+    // fixed no sigue el scroll/resize automáticamente — se cierra en vez
+    // de reposicionar, más simple y evita que quede flotando desalineado.
+    window.addEventListener('scroll', function () {
+      if (field.classList.contains('is-open')) closeListbox();
+    }, true);
+    window.addEventListener('resize', function () {
+      if (field.classList.contains('is-open')) closeListbox();
+    });
+
+    options.forEach(function (option) {
+      option.addEventListener('click', function () {
+        options.forEach(function (opt) {
+          var selected = opt === option;
+          opt.classList.toggle('is-selected', selected);
+          opt.setAttribute('aria-selected', selected ? 'true' : 'false');
+        });
+        input.value = option.dataset.value;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        closeListbox();
+      });
+    });
+  }
+
+  setupCityListbox('av-origin-field', 'field-origin', 'av-origin-listbox');
+  setupCityListbox('av-destination-field', 'field-destination', 'av-destination-listbox');
+
+  /* ============================================================
+     CALENDAR — Date range picker (Salida + Regreso)
+     Sigue el diseño Figma node 22159:10884
+     ============================================================ */
+  (function () {
+    var TODAY = new Date(); TODAY.setHours(0,0,0,0);
+
+    var MONTHS_LONG  = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    var MONTHS_SHORT = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    var DAYS_HDR     = ['Lu','Ma','Mi','Ju','Vi','Sá','Do'];
+
+    // State — pre-select today as departure
+    var state = {
+      open:        false,
+      step:        1,               // 1 = picking return (departure is today by default)
+      departure:   new Date(TODAY), // today pre-selected
+      returnDate:  null,
+      hoverDate:   null,
+      baseYear:    TODAY.getFullYear(),
+      baseMonth:   TODAY.getMonth()
+    };
+
+    var calEl        = document.getElementById('av-calendar');
+    var depInput     = document.getElementById('field-departure');
+    var retInput     = document.getElementById('field-return');
+    var depField     = document.getElementById('av-departure-field');
+    var retField     = document.getElementById('av-return-field');
+    var datesStation = document.getElementById('av-dates-station');
+
+    function triggerInput(inp) {
+      inp.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    function fmt(d) {
+      return d.getDate() + ' ' + MONTHS_SHORT[d.getMonth()] + ' ' + d.getFullYear();
+    }
+
+    function sameDay(a, b) {
+      return a && b &&
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth()    === b.getMonth()    &&
+        a.getDate()     === b.getDate();
+    }
+
+    // Seeded pseudo-random offer prices per month (deterministic, same output each render)
+    function monthOffers(y, m) {
+      var lastDay = new Date(y, m + 1, 0).getDate();
+      var offers  = {};
+      var seed    = ((y * 13 + m * 7) * 1664525 + 1013904223) >>> 0;
+      for (var d = 1; d <= lastDay; d++) {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        var date = new Date(y, m, d); date.setHours(0,0,0,0);
+        if (date < TODAY) continue;
+        if (sameDay(date, TODAY)) continue;
+        var r = seed % 100;
+        if      (r < 20) offers[d] = 'cheap';   // green — mejor precio
+        else if (r < 38) offers[d] = 'mid';      // yellow — precio normal
+        else if (r < 50) offers[d] = 'pricey';   // peach — precio alto
+      }
+      return offers;
+    }
+
+    // Build a month's week grid (Mon-first, null = empty cell)
+    function buildMonth(y, m) {
+      var first    = new Date(y, m, 1);
+      var lastDay  = new Date(y, m + 1, 0).getDate();
+      var startDow = (first.getDay() + 6) % 7;
+      var weeks = [], week = new Array(7).fill(null), col = startDow;
+      for (var d = 1; d <= lastDay; d++) {
+        week[col] = d;
+        col++;
+        if (col === 7) { weeks.push(week); week = new Array(7).fill(null); col = 0; }
+      }
+      if (col > 0) weeks.push(week);
+      return { y: y, m: m, weeks: weeks };
+    }
+
+    // Compute CSS classes for a day cell
+    function dayClasses(y, m, d) {
+      var date = new Date(y, m, d); date.setHours(0,0,0,0);
+      var cls  = ['av-calendar__day'];
+      if (date < TODAY) { cls.push('is-disabled'); return cls.join(' '); }
+      if (sameDay(date, TODAY)) cls.push('is-today');
+
+      var dep = state.departure;
+      var ret = state.returnDate;
+      var hov = (state.step === 1 && state.hoverDate && dep && state.hoverDate > dep)
+                ? state.hoverDate : null;
+      var end = ret || hov;
+
+      if (dep && sameDay(date, dep)) {
+        cls.push('is-selected');
+        if (end && !sameDay(dep, end)) cls.push('is-range-start');
+      } else if (end && sameDay(date, end) && !sameDay(date, dep)) {
+        cls.push('is-selected', 'is-range-end');
+      } else if (dep && end && date > dep && date < end) {
+        cls.push('is-range-inside');
+      }
+      return cls.join(' ');
+    }
+
+    // Render a single month column
+    function renderMonth(info, offers) {
+      var html = '<div class="av-calendar__month">';
+      html += '<div class="av-calendar__month-title">' + MONTHS_LONG[info.m] + ' ' + info.y + '</div>';
+      html += '<div class="av-calendar__grid">';
+
+      html += '<div class="av-calendar__week">';
+      DAYS_HDR.forEach(function(h) {
+        html += '<div class="av-calendar__hcell">' + h + '</div>';
+      });
+      html += '</div>';
+
+      info.weeks.forEach(function(week) {
+        html += '<div class="av-calendar__week">';
+        week.forEach(function(d) {
+          if (d === null) {
+            html += '<div class="av-calendar__day is-empty"></div>';
+          } else {
+            var cls       = dayClasses(info.y, info.m, d);
+            var isSelected = cls.indexOf('is-selected') !== -1;
+            var offerTier  = (!isSelected && offers && offers[d]) ? offers[d] : '';
+            var offerCls   = offerTier ? ' is-offer-' + offerTier : '';
+            html += '<div class="' + cls + offerCls + '" data-y="' + info.y + '" data-m="' + info.m + '" data-d="' + d + '">' +
+                    '<div class="av-calendar__day-num">' + d + '</div></div>';
+          }
+        });
+        html += '</div>';
+      });
+
+      html += '</div></div>';
+      return html;
+    }
+
+    // Full calendar render
+    function render() {
+      var m1y = state.baseYear, m1m = state.baseMonth;
+      var m2m = m1m + 1, m2y = m1y;
+      if (m2m > 11) { m2m = 0; m2y++; }
+
+      var offers1  = monthOffers(m1y, m1m);
+      var offers2  = monthOffers(m2y, m2m);
+      var info1    = buildMonth(m1y, m1m);
+      var info2    = buildMonth(m2y, m2m);
+      var canPrev  = !(m1y === TODAY.getFullYear() && m1m <= TODAY.getMonth());
+
+      var title = state.step === 0
+        ? '¿Cuándo quieres volar?'
+        : 'Elige tu fecha de regreso';
+
+      var html = '<div class="av-calendar__title">' + title + '</div>';
+      html += '<div class="av-calendar__body">';
+      html += '<button class="av-calendar__arrow" id="av-cal-prev"' + (canPrev ? '' : ' disabled') + '>&#8249;</button>';
+      html += '<div class="av-calendar__months">';
+      html += renderMonth(info1, offers1);
+      html += renderMonth(info2, offers2);
+      html += '</div>';
+      html += '<button class="av-calendar__arrow" id="av-cal-next">&#8250;</button>';
+      html += '</div>';
+
+      calEl.innerHTML = html;
+      bindArrows();
+    }
+
+    function bindArrows() {
+      var prev = document.getElementById('av-cal-prev');
+      var next = document.getElementById('av-cal-next');
+      if (prev) prev.addEventListener('click', function(e) {
+        e.stopPropagation();
+        state.baseMonth--; if (state.baseMonth < 0) { state.baseMonth = 11; state.baseYear--; }
+        render();
+      });
+      if (next) next.addEventListener('click', function(e) {
+        e.stopPropagation();
+        state.baseMonth++; if (state.baseMonth > 11) { state.baseMonth = 0; state.baseYear++; }
+        render();
+      });
+    }
+
+    function onDayClick(date) {
+      if (state.step === 0) {
+        state.departure  = date;
+        state.returnDate = null;
+        state.step       = 1;
+        depInput.value   = fmt(date); triggerInput(depInput);
+        retInput.value   = '';        triggerInput(retInput);
+      } else {
+        if (date <= state.departure) {
+          state.departure  = date;
+          state.returnDate = null;
+          depInput.value   = fmt(date); triggerInput(depInput);
+          retInput.value   = '';        triggerInput(retInput);
+        } else {
+          state.returnDate = date;
+          state.step       = 0;
+          retInput.value   = fmt(date); triggerInput(retInput);
+          setTimeout(closeCalendar, 150);
+        }
+      }
+      state.hoverDate = null;
+      render();
+    }
+
+    function openCalendar(focusedInput) {
+      var rect = datesStation.getBoundingClientRect();
+      calEl.style.top  = (rect.bottom + 8) + 'px';
+      var left = rect.left + (rect.width / 2) - (704 / 2);
+      left = Math.max(24, Math.min(left, window.innerWidth - 704 - 24));
+      calEl.style.left = left + 'px';
+
+      if (focusedInput === 'return' && state.departure && !state.returnDate) {
+        state.step = 1;
+      } else if (focusedInput === 'departure') {
+        state.step = 0;
+      }
+
+      calEl.classList.add('is-open');
+      state.open = true;
+      render();
+    }
+
+    function closeCalendar() {
+      calEl.classList.remove('is-open');
+      state.open      = false;
+      state.hoverDate = null;
+    }
+
+    // Event delegation — survives innerHTML rebuilds on each render()
+    calEl.addEventListener('click', function(e) {
+      var cell = e.target.closest('.av-calendar__day');
+      if (!cell || cell.classList.contains('is-empty') || cell.classList.contains('is-disabled')) return;
+      var clicked = new Date(+cell.dataset.y, +cell.dataset.m, +cell.dataset.d);
+      clicked.setHours(0,0,0,0);
+      onDayClick(clicked);
+    });
+
+    calEl.addEventListener('mousemove', function(e) {
+      var cell = e.target.closest('.av-calendar__day');
+      if (!cell || cell.classList.contains('is-empty') || cell.classList.contains('is-disabled')) {
+        if (state.hoverDate) { state.hoverDate = null; if (state.step === 1 && state.departure) render(); }
+        return;
+      }
+      var newH = new Date(+cell.dataset.y, +cell.dataset.m, +cell.dataset.d);
+      newH.setHours(0,0,0,0);
+      if (!state.hoverDate || !sameDay(newH, state.hoverDate)) {
+        state.hoverDate = newH;
+        if (state.step === 1 && state.departure) render();
+      }
+    });
+
+    calEl.addEventListener('mouseleave', function() {
+      if (state.hoverDate) {
+        state.hoverDate = null;
+        if (state.step === 1 && state.departure) render();
+      }
+    });
+
+    // Open on click/focus of date fields
+    depField.addEventListener('click', function() { openCalendar('departure'); });
+    retField.addEventListener('click', function() { openCalendar('return'); });
+    depInput.addEventListener('focus', function() { openCalendar('departure'); });
+    retInput.addEventListener('focus', function() { openCalendar('return'); });
+
+    // Close on outside click
+    document.addEventListener('click', function(e) {
+      if (!state.open) return;
+      if (!calEl.contains(e.target) && !datesStation.contains(e.target)) closeCalendar();
+    });
+
+    // Close on Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && state.open) { closeCalendar(); depInput.blur(); retInput.blur(); }
+    });
+
+    // Close on scroll / resize
+    window.addEventListener('scroll', function() { if (state.open) closeCalendar(); }, true);
+    window.addEventListener('resize', function() { if (state.open) closeCalendar(); });
+
+    // Init: set departure input to today
+    depInput.value = fmt(TODAY);
+    triggerInput(depInput);
+
+  })();
+
+</script>
+
+
+</body>
+</html>
