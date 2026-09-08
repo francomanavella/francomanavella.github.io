@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AV — UserProfileButton</title>
+<style>
+
+  /* ============================================================
+     TOKENS — copiados literalmente de search-desktop.html (misma
+     fuente de verdad, design.md) + tokens nuevos propios de este
+     componente, extraídos del nodo Figma 22192:7429 "Profile button".
+     ============================================================ */
+  :root {
+    --gray-0: #FFFFFF;
+
+    --color-text-primary:    #1B1B1B;
+    --color-text-secondary:  #6C6C6C;
+    --color-text-disabled:   #5A5A5A;
+    --color-text-inverse:    #FFFFFF;
+    --color-background:      #FFFFFF;
+    --color-border:          #E9E9E9;
+    --color-border-strong:   #D9D9D9;
+    --color-hover:           #E9E9E9;
+    --color-pressed:         #D9D9D9;
+
+    --color-focus-ring:      #1D9BF0;
+
+    --font-primary: 'Red Hat Display', sans-serif;
+
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-4: 16px;
+    --space-6: 24px;
+    --space-12: 48px;
+
+    --radius-xl:   16px;
+    --radius-full: 9999px;
+
+    --duration-fast:   100ms;
+    --duration-normal: 200ms;
+    --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* ------------------------------------------------------------
+       NUEVO — propios de UserProfileButton, no existían en
+       search-desktop.html. Sacados del nodo Figma 22192:7429.
+       ------------------------------------------------------------ */
+    --color-av-red:          #FF0000; /* NUEVO — borde de marca, token "red/red500" en Figma, = --color-av-red / --color-danger de design.md */
+    --color-text-tertiary:   #5A5A5A; /* NUEVO — "text/normal/secondary" del componente, distinto del --color-text-secondary ya existente (#6C6C6C) */
+    --shadow-profile-menu:   0px 2px 20px 2px rgba(73, 73, 73, 0.25); /* NUEVO — sombra del dropdown, distinta de --shadow-dropdown */
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: var(--font-primary);
+    background: #FFFFFF;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--space-12);
+  }
+
+  /* Contexto de posicionamiento para que el dropdown se alinee
+     respecto al botón (mismo rol que .av-playground__stage antes). */
+  .av-profile-wrap {
+    position: relative;
+  }
+
+  /* ============================================================
+     USERPROFILEBUTTON — componente
+     ============================================================ */
+  .av-profile-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    width: 182px;
+    height: 50px;
+    padding: var(--space-2);
+    border-radius: var(--radius-full);
+    border: 2px solid transparent;
+    background:
+      linear-gradient(var(--color-background), var(--color-background)) padding-box,
+      linear-gradient(90deg, var(--color-av-red), var(--color-av-red)) border-box;
+    font-family: var(--font-primary);
+    cursor: pointer;
+    text-align: left;
+    transition: background-color var(--duration-fast) var(--ease-default);
+  }
+
+  /* Hover — el stroke pasa a un degradé rojo→magenta (mismos colores
+     que el badge Lifemiles) y se desliza en loop mientras dura el hover. */
+  .av-profile-btn:hover {
+    background:
+      linear-gradient(var(--color-hover), var(--color-hover)) padding-box,
+      linear-gradient(90deg, var(--color-av-red) 0%, #B50080 50%, var(--color-av-red) 100%) border-box;
+    background-size: 100% 100%, 250% 100%;
+    animation: avProfileBorderFlow 2.4s ease-in-out infinite;
+  }
+
+  @keyframes avProfileBorderFlow {
+    0%   { background-position: 0 0, 0% 0; }
+    50%  { background-position: 0 0, 100% 0; }
+    100% { background-position: 0 0, 0% 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .av-profile-btn:hover {
+      animation: none;
+    }
+  }
+
+  .av-profile-btn:active {
+    background:
+      linear-gradient(var(--color-pressed), var(--color-pressed)) padding-box,
+      linear-gradient(90deg, var(--color-av-red), var(--color-av-red)) border-box;
+    animation: none;
+  }
+
+  .av-profile-btn:focus {
+    outline: none;
+  }
+
+  /* <focusRing> — mismo patrón que el nodo Figma: anillo absoluto,
+     -4px de offset, no desplaza layout. */
+  .av-profile-btn:focus-visible::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: var(--radius-full);
+    border: 2px solid var(--color-focus-ring);
+    pointer-events: none;
+  }
+
+  .av-profile-btn[aria-expanded="true"]:not(:hover) {
+    background:
+      linear-gradient(var(--color-background), var(--color-background)) padding-box,
+      linear-gradient(90deg, var(--color-av-red), var(--color-av-red)) border-box;
+    animation: none;
+  }
+
+  .av-profile-btn__info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex: 1 0 0;
+    min-width: 0;
+  }
+
+  .av-profile-btn__avatar {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    display: block;
+  }
+
+  .av-profile-btn__text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1 0 0;
+    min-width: 0;
+    max-width: 96px;
+  }
+
+  .av-profile-btn__name {
+    font-weight: 700;
+    font-size: 16px;
+    line-height: normal;
+    color: var(--color-text-primary);
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+  }
+
+  .av-profile-btn__balance {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    color: var(--color-text-tertiary);
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+
+  .av-profile-btn__balance strong {
+    font-weight: 700;
+  }
+
+  .av-profile-btn__balance span {
+    font-weight: 400;
+  }
+
+  .av-profile-btn__chevron {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-primary);
+    transition: transform var(--duration-normal) var(--ease-default);
+  }
+
+  .av-profile-btn__chevron svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .av-profile-btn[aria-expanded="true"] .av-profile-btn__chevron {
+    transform: rotate(180deg);
+  }
+
+  /* ---------------- Dropdown (estado Open) ---------------- */
+  .av-profile-menu {
+    position: absolute;
+    top: 56px;
+    right: -2px;
+    width: 250px;
+    min-width: 180px;
+    max-width: 580px;
+    max-height: 352px;
+    overflow-y: auto;
+    background: var(--gray-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-profile-menu);
+    padding: var(--space-2) 0;
+    display: none;
+    flex-direction: column;
+    z-index: 10;
+  }
+
+  .av-profile-btn[aria-expanded="true"] + .av-profile-menu {
+    display: flex;
+  }
+
+  .av-profile-menu__item {
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    background: var(--gray-0);
+    width: 100%;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: 12px var(--space-4);
+    position: relative;
+    font-family: var(--font-primary);
+    font-weight: 400;
+    font-size: 16px;
+    color: var(--color-text-primary);
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease-default);
+  }
+
+  .av-profile-menu__item:hover {
+    background: var(--color-hover);
+  }
+
+  .av-profile-menu__item span {
+    flex: 1 0 0;
+  }
+
+  .av-profile-menu__item svg {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    color: var(--color-text-primary);
+  }
+
+  .av-profile-menu__item--divider {
+    box-shadow: inset 0 -1px 0 0 var(--color-border-strong);
+  }
+
+</style>
+</head>
+<body>
+
+  <div class="av-profile-wrap">
+  <button type="button" class="av-profile-btn" id="profileTrigger" aria-haspopup="menu" aria-expanded="false">
+    <span class="av-profile-btn__info">
+      <span class="av-profile-btn__avatar" aria-hidden="true">
+        <svg viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" width="34" height="34">
+          <path d="M0 17C0 7.61116 7.61116 0 17 0V0C26.3888 0 34 7.61116 34 17V17C34 26.3888 26.3888 34 17 34V34C7.61116 34 0 26.3888 0 17V17Z" fill="url(#pb_grad_live)"/>
+          <path d="M19.7152 17.0802C19.6452 16.7345 19.5306 16.4292 19.3713 16.165C19.2119 15.9009 19.0041 15.6892 18.7477 15.5295C18.4913 15.3705 18.1765 15.2903 17.8033 15.2903C16.9406 15.2903 16.3072 15.6129 15.9031 16.2579C15.6853 15.916 15.4543 15.6691 15.2095 15.5175C14.9647 15.366 14.6555 15.2903 14.2827 15.2903C13.9796 15.2903 13.6824 15.3565 13.3908 15.4887C13.0992 15.6209 12.8639 15.8425 12.6853 16.1534V15.4075H10.8898V19.7539H9.73901C9.16995 19.7609 9.12915 19.4349 9.12915 19.2872V12.8889H7.26333V19.5808C7.25735 20.5428 7.90802 21.1291 9.73549 21.1189V21.121H12.3765V21.1196H12.7549V17.2022C12.8404 17.0781 12.955 16.9733 13.0989 16.8874C13.2427 16.802 13.4119 16.7591 13.606 16.7591C13.9092 16.7591 14.1209 16.8699 14.2412 17.0914C14.3615 17.313 14.422 17.6609 14.422 18.135V21.1196H16.2871V18.1701C16.2871 18.0147 16.2815 17.8515 16.2695 17.6805C16.2576 17.5096 16.2365 17.358 16.2055 17.2258C16.3142 17.1016 16.4464 16.9926 16.6019 16.8994C16.7574 16.8062 16.936 16.7594 17.1383 16.7594C17.4414 16.7594 17.6532 16.8702 17.7738 17.0918C17.8941 17.3134 17.9546 17.6612 17.9546 18.1353V21.1199H19.82V18.1705C19.82 17.7896 19.7852 17.4259 19.7152 17.0802Z" fill="white"/>
+          <path d="M21.4487 18.6534C22.0364 18.0657 22.9895 18.0657 23.5775 18.6534C24.1652 19.2411 24.1652 20.1942 23.5775 20.7823C22.9898 21.37 22.0367 21.37 21.4487 20.7823C20.8609 20.1946 20.8609 19.2414 21.4487 18.6534Z" fill="white"/>
+          <path d="M21.4486 13.2177C22.0363 12.63 22.9894 12.63 23.5774 13.2177C24.1652 13.8054 24.1652 14.7586 23.5774 15.3466C22.9897 15.9343 22.0366 15.9343 21.4486 15.3466C20.8608 14.7589 20.8608 13.8058 21.4486 13.2177Z" fill="white"/>
+          <path d="M24.167 15.9357C24.7547 15.348 25.7079 15.348 26.2959 15.9357C26.8836 16.5234 26.8836 17.4765 26.2959 18.0646C25.7082 18.6523 24.7551 18.6523 24.167 18.0646C23.579 17.4769 23.5793 16.5237 24.167 15.9357Z" fill="white"/>
+          <defs><linearGradient id="pb_grad_live" x1="0" y1="17" x2="34" y2="17" gradientUnits="userSpaceOnUse"><stop stop-color="#FF0000"/><stop offset="1" stop-color="#B50080"/></linearGradient></defs>
+        </svg>
+      </span>
+      <span class="av-profile-btn__text">
+        <span class="av-profile-btn__name">Dominic Dicoco</span>
+        <span class="av-profile-btn__balance"><strong>894</strong><span>miles</span></span>
+      </span>
+    </span>
+    <span class="av-profile-btn__chevron" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.59 8.59009L12 13.1701L7.41 8.59009L6 10.0001L12 16.0001L18 10.0001L16.59 8.59009Z" fill="currentColor"/></svg>
+    </span>
+  </button>
+  <div class="av-profile-menu" id="profileMenu" role="menu" aria-label="Menú de perfil">
+    <button type="button" class="av-profile-menu__item" role="menuitem">Home</button>
+    <button type="button" class="av-profile-menu__item" role="menuitem">My elite status</button>
+    <button type="button" class="av-profile-menu__item" role="menuitem">My trips</button>
+    <button type="button" class="av-profile-menu__item" role="menuitem">Personal data</button>
+    <button type="button" class="av-profile-menu__item" role="menuitem">
+      <span>Book flight with miles</span>
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M19 19H5V5H12V3H5C3.89 3 3 3.9 3 5V19C3 20.1 3.89 21 5 21H19C20.1 21 21 20.1 21 19V12H19V19V19ZM14 3V5H17.59L7.76 14.83L9.17 16.24L19 6.41V10H21V3H14V3Z" fill="currentColor"/></svg>
+    </button>
+    <button type="button" class="av-profile-menu__item av-profile-menu__item--divider" role="menuitem">Account settings</button>
+    <button type="button" class="av-profile-menu__item" role="menuitem">Log out</button>
+  </div>
+  </div>
+
+  <script>
+    (function () {
+      var trigger = document.getElementById('profileTrigger');
+      var menu = document.getElementById('profileMenu');
+
+      function closeMenu() {
+        trigger.setAttribute('aria-expanded', 'false');
+      }
+
+      function openMenu() {
+        trigger.setAttribute('aria-expanded', 'true');
+      }
+
+      function isOpen() {
+        return trigger.getAttribute('aria-expanded') === 'true';
+      }
+
+      trigger.addEventListener('click', function () {
+        isOpen() ? closeMenu() : openMenu();
+      });
+
+      document.addEventListener('click', function (event) {
+        if (!isOpen()) return;
+        if (trigger.contains(event.target) || menu.contains(event.target)) return;
+        closeMenu();
+      });
+
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && isOpen()) {
+          closeMenu();
+          trigger.focus();
+        }
+      });
+
+      menu.querySelectorAll('.av-profile-menu__item').forEach(function (item) {
+        item.addEventListener('click', function () {
+          closeMenu();
+          trigger.focus();
+        });
+      });
+    })();
+  </script>
+
+</body>
+</html>
