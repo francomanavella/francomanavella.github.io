@@ -29,7 +29,12 @@ Diseño y desarrollo del componente de búsqueda de vuelos para AV: control de e
 - 🎨 [Ver Style Guide / Design System](https://francomanavella.github.io/proyectos/av-search-component/design-system.html)
 - 📄 [Documentación del design system](proyectos/av-search-component/Design.md)
 
+### 👤 AV — UserProfileButton
+Botón de perfil de usuario para AV: muestra avatar/badge de LifeMiles, nombre y balance de millas, con estados de hover, press y focus, y un dropdown de navegación (Home, estatus, viajes, datos personales, configuración de cuenta, logout). El borde cambia a un degradé rojo→magenta animado en hover, construido sobre los mismos tokens de color, tipografía y espaciado del design system.
+
+- 🎨 [Ver en Figma](https://www.figma.com/design/jGzhpuAC9xpoLmFrHlV85h/Buttonprofile?node-id=1-837&t=fjBBpN748fuQ1Ya1-4)
+- 💻 [Ver demo](https://francomanavella.github.io/proyectos/av-user-profile-button/user-profile-button.html)
+
 ## 📬 Contacto
 - ✉️ Email: [francomanavella2@gmail.com](mailto:francomanavella2@gmail.com)
 - 💼 LinkedIn: [linkedin.com/in/franco-manavella-30884032](https://www.linkedin.com/in/franco-manavella-30884032/)
-  
